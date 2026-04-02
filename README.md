@@ -76,27 +76,6 @@ testcase-generator/
 
 ## Release Automation
 
-GitHub Actions now covers these automated release targets:
-
-- `npm` public package publishing
-- Docker image publishing to Docker Hub
-- Docker image publishing to GitHub Container Registry (`ghcr.io`)
-- GitHub Releases with versioned `.tgz` assets
-
-Release automation is production-ready for the targets above. `PyPI`, `Homebrew`, `Go`, and `APT` are not wired yet because they still need real package manifests and distribution assets in this repository.
-
-Security checks now run on pull requests and merges to `main`:
-
-- CodeQL code scanning
-- dependency review for pull requests
-- `npm audit` for production dependencies
-- secret scanning with Gitleaks
-
-To enable publishing, configure these repository secrets:
-
-- `NPM_TOKEN`
-- `DOCKERHUB_USERNAME`
-- `DOCKERHUB_TOKEN`
 
 Release publishing is triggered by pushing a tag like `v1.0.0`, and the tag must match `package.json`'s version.
 
