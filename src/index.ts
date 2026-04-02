@@ -203,7 +203,7 @@ function resolveModels(raw: Record<string, unknown>): ModelEntry[] {
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   const openaiKey    = process.env.OPENAI_API_KEY;
   const deepseekKey  = process.env.DEEPSEEK_API_KEY;
-  const provider = (process.env.AI_PROVIDER ?? "claude") as string;
+  const provider = (process.env.AI_PROVIDER ?? "anthropic") as string;
 
   if (anthropicKey) entries.push({ id: "claude-env", vendor: "anthropic", model: "claude-opus-4-5", apiKey: anthropicKey, role: "both" });
   if (openaiKey)    entries.push({ id: "openai-env",  vendor: "openai",    model: "gpt-4o",          apiKey: openaiKey,    role: "reviewer" });

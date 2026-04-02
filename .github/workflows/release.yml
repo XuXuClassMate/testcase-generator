@@ -16,6 +16,8 @@ jobs:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      DOCKER_BUILD_SUMMARY: false
+      DOCKER_BUILD_RECORD_UPLOAD: false
 
     steps:
       - name: Checkout
@@ -56,18 +58,24 @@ jobs:
           mkdir -p release
           npm pack --pack-destination release
           tar -czf "release/testcase-generator-${{ steps.meta.outputs.version }}-bundle.tgz" \
-            dist public README.md docs openclaw.plugin.json SKILL.md docker-compose.yml .env.example scripts/install.sh package.json
+            dist public README.md docs Dockerfile .dockerignore openclaw.plugin.json SKILL.md \
+            docker-compose.yml .env.example scripts/install.sh package.json package-lock.json tsconfig.json
 
-      - name: Create GitHub release
-        uses: softprops/action-gh-release@v2
-        with:
-          generate_release_notes: true
-          files: |
-            release/*.tgz
+      - name: Check npm package status
+        id: npm_status
+        if: ${{ env.NPM_TOKEN != '' }}
+        shell: bash
+        run: |
+          VERSION="${{ steps.meta.outputs.version }}"
+          if npm view "testcase-generator@${VERSION}" version --json >/dev/null 2>&1; then
+            echo "already_published=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "already_published=false" >> "${GITHUB_OUTPUT}"
+          fi
 
       - name: Publish to npm
         id: publish_npm
-        if: ${{ env.NPM_TOKEN != '' }}
+        if: ${{ env.NPM_TOKEN != '' && steps.npm_status.outputs.already_published != 'true' }}
         continue-on-error: true
         env:
           NODE_AUTH_TOKEN: ${{ env.NPM_TOKEN }}
@@ -119,20 +127,135 @@ jobs:
             ${{ env.DOCKERHUB_USERNAME }}/testcase-generator:${{ steps.meta.outputs.version }}
             ${{ env.DOCKERHUB_USERNAME }}/testcase-generator:latest
 
+      - name: Generate release notes
+        shell: bash
+        run: |
+          VERSION="${{ steps.meta.outputs.version }}"
+          TAG="v${VERSION}"
+          REPO="${GITHUB_REPOSITORY}"
+          OWNER_LC="${{ steps.meta.outputs.owner_lc }}"
+          RELEASE_DOWNLOAD_BASE="https://github.com/${REPO}/releases/download/${TAG}"
+          PACKAGE_TGZ_URL="${RELEASE_DOWNLOAD_BASE}/testcase-generator-${VERSION}.tgz"
+          BUNDLE_TGZ_URL="${RELEASE_DOWNLOAD_BASE}/testcase-generator-${VERSION}-bundle.tgz"
+          SOURCE_ZIP_URL="https://github.com/${REPO}/archive/refs/tags/${TAG}.zip"
+          SOURCE_TGZ_URL="https://github.com/${REPO}/archive/refs/tags/${TAG}.tar.gz"
+          GHCR_PACKAGE_URL="https://github.com/${REPO}/pkgs/container/testcase-generator"
+          GHCR_PULL_CMD="docker pull ghcr.io/${OWNER_LC}/testcase-generator:${VERSION}"
+          NPM_INSTALL_CMD="npm install -g testcase-generator@${VERSION}"
+          NPM_STATUS_LINE="- npm: not configured for this workflow run."
+          GHCR_STATUS_LINE="- GHCR: publish failed in this workflow run."
+          DOCKERHUB_STATUS_LINE="- Docker Hub: not configured for this workflow run."
+          NPM_QUICKSTART_LINE="- npm: not available in this workflow run."
+          GHCR_QUICKSTART_LINE="- GHCR: not available in this workflow run."
+          DOCKERHUB_QUICKSTART_LINE=""
+
+          if [[ -n "${NPM_TOKEN}" ]]; then
+            if [[ "${{ steps.npm_status.outputs.already_published }}" == "true" ]]; then
+              NPM_STATUS_LINE="- npm: available. \`${NPM_INSTALL_CMD}\`"
+              NPM_QUICKSTART_LINE="- npm: \`${NPM_INSTALL_CMD}\`"
+            elif [[ "${{ steps.publish_npm.outcome }}" == "success" ]]; then
+              NPM_STATUS_LINE="- npm: published in this release. \`${NPM_INSTALL_CMD}\`"
+              NPM_QUICKSTART_LINE="- npm: \`${NPM_INSTALL_CMD}\`"
+            elif [[ "${{ steps.publish_npm.outcome }}" == "failure" ]]; then
+              NPM_STATUS_LINE="- npm: publish failed in this workflow run."
+            else
+              NPM_STATUS_LINE="- npm: skipped."
+            fi
+          fi
+
+          if [[ "${{ steps.login_ghcr.outcome }}" == "success" && "${{ steps.publish_ghcr.outcome }}" == "success" ]]; then
+            GHCR_STATUS_LINE="- GHCR: published. \`${GHCR_PULL_CMD}\` ([package](${GHCR_PACKAGE_URL}))"
+            GHCR_QUICKSTART_LINE="- GHCR: \`${GHCR_PULL_CMD}\`"
+          fi
+
+          if [[ -n "${DOCKERHUB_USERNAME}" && -n "${DOCKERHUB_TOKEN}" ]]; then
+            DOCKERHUB_IMAGE="docker.io/${DOCKERHUB_USERNAME}/testcase-generator:${VERSION}"
+            DOCKERHUB_PACKAGE_URL="https://hub.docker.com/r/${DOCKERHUB_USERNAME}/testcase-generator"
+            if [[ "${{ steps.login_dockerhub.outcome }}" == "success" && "${{ steps.publish_dockerhub.outcome }}" == "success" ]]; then
+              DOCKERHUB_STATUS_LINE="- Docker Hub: published. \`docker pull ${DOCKERHUB_IMAGE}\` ([package](${DOCKERHUB_PACKAGE_URL}))"
+              DOCKERHUB_QUICKSTART_LINE="- Docker Hub: \`docker pull ${DOCKERHUB_IMAGE}\`"
+            elif [[ "${{ steps.publish_dockerhub.outcome }}" == "failure" || "${{ steps.login_dockerhub.outcome }}" == "failure" ]]; then
+              DOCKERHUB_STATUS_LINE="- Docker Hub: publish failed in this workflow run."
+            fi
+          fi
+
+          cat > release/notes.md <<EOF
+          ## Testcase Generator ${VERSION}
+
+          Development-stage release for the four currently supported delivery modes: local source run, OpenClaw, npm, and Docker.
+
+          ### Distribution
+
+          ${NPM_STATUS_LINE}
+          ${GHCR_STATUS_LINE}
+          ${DOCKERHUB_STATUS_LINE}
+          - GitHub Release assets:
+            - [testcase-generator-${VERSION}.tgz](${PACKAGE_TGZ_URL})
+            - [testcase-generator-${VERSION}-bundle.tgz](${BUNDLE_TGZ_URL})
+
+          ### Quick Start
+
+          ${NPM_QUICKSTART_LINE}
+          ${GHCR_QUICKSTART_LINE}
+          ${DOCKERHUB_QUICKSTART_LINE}
+          - Release asset (package tarball): [testcase-generator-${VERSION}.tgz](${PACKAGE_TGZ_URL})
+          - Release asset (standalone bundle): [testcase-generator-${VERSION}-bundle.tgz](${BUNDLE_TGZ_URL})
+
+          ### What Is Included
+
+          - Web UI with bilingual page language support, including localized Testing Stage content and export output language.
+          - Standalone service with request rate limiting and safer media probing.
+          - OpenClaw plugin package, npm package, and Docker images for the same 1.0.0 release line.
+          - Source archives: [zip](${SOURCE_ZIP_URL}) and [tar.gz](${SOURCE_TGZ_URL})
+
+          ### Notes
+
+          - Default standalone port: \`3456\`
+          - Configure at least one provider API key before first run.
+          - For Docker and env-based startup, \`AI_PROVIDER=anthropic\` is the default recommendation.
+          EOF
+
+      - name: Create or update GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ steps.meta.outputs.version }}
+          body_path: release/notes.md
+          generate_release_notes: false
+          overwrite_files: true
+          files: |
+            release/*.tgz
+
       - name: Check publish results
         if: always()
         shell: bash
         run: |
           npm_outcome="${{ steps.publish_npm.outcome }}"
+          npm_already_published="${{ steps.npm_status.outputs.already_published }}"
           ghcr_login_outcome="${{ steps.login_ghcr.outcome }}"
           ghcr_publish_outcome="${{ steps.publish_ghcr.outcome }}"
           dockerhub_login_outcome="${{ steps.login_dockerhub.outcome }}"
           dockerhub_publish_outcome="${{ steps.publish_dockerhub.outcome }}"
+          dockerhub_required="false"
+          if [[ -n "${DOCKERHUB_USERNAME}" && -n "${DOCKERHUB_TOKEN}" ]]; then
+            dockerhub_required="true"
+          fi
+
+          if [[ -z "${NPM_TOKEN}" ]]; then
+            npm_status="not configured"
+          elif [[ "${npm_already_published}" == "true" ]]; then
+            npm_status="already published"
+          elif [[ "${npm_outcome}" == "success" ]]; then
+            npm_status="published"
+          elif [[ "${npm_outcome}" == "failure" ]]; then
+            npm_status="failure"
+          else
+            npm_status="skipped"
+          fi
 
           {
             echo "## Publish outcomes"
             echo ""
-            echo "- npm: ${npm_outcome}"
+            echo "- npm: ${npm_status}"
             echo "- ghcr login: ${ghcr_login_outcome}"
             echo "- ghcr publish: ${ghcr_publish_outcome}"
             echo "- dockerhub login: ${dockerhub_login_outcome}"
@@ -141,15 +264,15 @@ jobs:
 
           failures=()
 
-          if [[ "${npm_outcome}" == "failure" ]]; then
+          if [[ -n "${NPM_TOKEN}" && "${npm_already_published}" != "true" && "${npm_outcome}" != "success" ]]; then
             echo "::error title=Publish target failed::npm publish failed"
             failures+=("npm")
           fi
-          if [[ "${ghcr_login_outcome}" == "failure" || "${ghcr_publish_outcome}" == "failure" ]]; then
+          if [[ "${ghcr_login_outcome}" != "success" || "${ghcr_publish_outcome}" != "success" ]]; then
             echo "::error title=Publish target failed::GHCR publish failed"
             failures+=("ghcr")
           fi
-          if [[ "${dockerhub_login_outcome}" == "failure" || "${dockerhub_publish_outcome}" == "failure" ]]; then
+          if [[ "${dockerhub_required}" == "true" && ( "${dockerhub_login_outcome}" != "success" || "${dockerhub_publish_outcome}" != "success" ) ]]; then
             echo "::error title=Publish target failed::Docker Hub publish failed"
             failures+=("dockerhub")
           fi

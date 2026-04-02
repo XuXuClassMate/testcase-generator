@@ -26,7 +26,7 @@ RUN mkdir -p /data/testcase-output
 ENV NODE_ENV=production
 ENV PORT=3456
 ENV OUTPUT_DIR=/data/testcase-output
-ENV AI_PROVIDER=claude
+ENV AI_PROVIDER=anthropic
 
 EXPOSE 3456
 
