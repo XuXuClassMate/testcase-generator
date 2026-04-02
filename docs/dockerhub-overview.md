@@ -6,9 +6,8 @@
 
 [![Version](https://img.shields.io/github/v/release/XuXuClassMate/testcase-generator?label=version)](https://github.com/XuXuClassMate/testcase-generator/releases)
 [![Docker Pulls](https://img.shields.io/docker/pulls/xuxuclassmate/testcase-generator)](https://hub.docker.com/r/xuxuclassmate/testcase-generator)
-[![npm](https://img.shields.io/npm/v/%40classmatexuxu%2Ftestcase-generator?label=npm)](https://www.npmjs.com/package/@classmatexuxu/testcase-generator)
 
-[GitHub](https://github.com/XuXuClassMate/testcase-generator) • [Docker Hub](https://hub.docker.com/r/xuxuclassmate/testcase-generator) • [npm](https://www.npmjs.com/package/@classmatexuxu/testcase-generator) • [Detailed Docs](https://github.com/XuXuClassMate/testcase-generator/blob/main/docs/README.md)
+[GitHub](https://github.com/XuXuClassMate/testcase-generator) • [Docker Hub](https://hub.docker.com/r/xuxuclassmate/testcase-generator) • [Releases](https://github.com/XuXuClassMate/testcase-generator/releases)
 
 </div>
 
@@ -25,11 +24,7 @@ Testcase Generator turns requirement documents and multimodal inputs into struct
   Product Manager
 - Exports Excel, Markdown, and XMind
 - Supports English and Chinese output
-- Runs in four supported modes:
-  Docker
-  Local source run
-  npm global install
-  OpenClaw plugin
+- Ships as a ready-to-run Docker image for standalone web usage
 
 ## Docker Quick Start
 
@@ -78,6 +73,22 @@ docker run -d \
 
 Open [http://localhost:3456](http://localhost:3456).
 
+## Docker Compose
+
+If you prefer `docker compose`, use:
+
+```bash
+curl -O https://raw.githubusercontent.com/XuXuClassMate/testcase-generator/main/.env.example
+cp .env.example .env
+docker compose up -d
+```
+
+Stop the service with:
+
+```bash
+docker compose down
+```
+
 ## Environment Variables
 
 | Variable | Default | Description |
@@ -103,46 +114,13 @@ Generated sessions can export:
 
 The page language controls both the generated content language and the exported file language in standalone mode.
 
-## Alternative Run Modes
+## Image Tags
 
-### npm global install
-
-```bash
-npm install -g @classmatexuxu/testcase-generator
-
-export AI_PROVIDER=anthropic
-export ANTHROPIC_API_KEY=sk-ant-...
-export PORT=3456
-
-testcase-generator --standalone
-```
-
-### Local source run
-
-```bash
-git clone https://github.com/XuXuClassMate/testcase-generator.git
-cd testcase-generator
-npm install
-cp .env.example .env
-npm run build
-npm run start
-```
-
-### OpenClaw plugin
-
-```bash
-openclaw plugins install -l /path/to/testcase-generator
-openclaw gateway restart
-openclaw plugins list
-```
-
-For the full OpenClaw configuration example, see:
-
-- https://github.com/XuXuClassMate/testcase-generator/blob/main/docs/README.md
+- `xuxuclassmate/testcase-generator:latest`
+- `xuxuclassmate/testcase-generator:1.0.0`
 
 ## Links
 
 - GitHub: https://github.com/XuXuClassMate/testcase-generator
 - Docker Hub: https://hub.docker.com/r/xuxuclassmate/testcase-generator
-- npm: https://www.npmjs.com/package/@classmatexuxu/testcase-generator
 - Releases: https://github.com/XuXuClassMate/testcase-generator/releases
