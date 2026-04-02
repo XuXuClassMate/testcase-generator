@@ -56,14 +56,24 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Prepare npm package
+        run: npm run prepare:npm-package
+
       - name: Prepare release assets
         shell: bash
         run: |
           mkdir -p release
-          npm pack --pack-destination release
+          npm pack ./release/npm-package --pack-destination release
           mv "release/${{ steps.meta.outputs.package_archive_base }}-${{ steps.meta.outputs.version }}.tgz" \
             "release/testcase-generator-${{ steps.meta.outputs.version }}.tgz"
+          (
+            cd release/npm-package
+            zip -qr "../testcase-generator-${{ steps.meta.outputs.version }}.zip" .
+          )
           tar -czf "release/testcase-generator-${{ steps.meta.outputs.version }}-bundle.tgz" \
+            dist public README.md docs Dockerfile .dockerignore openclaw.plugin.json SKILL.md \
+            docker-compose.yml .env.example scripts/install.sh package.json package-lock.json tsconfig.json
+          zip -qr "release/testcase-generator-${{ steps.meta.outputs.version }}-bundle.zip" \
             dist public README.md docs Dockerfile .dockerignore openclaw.plugin.json SKILL.md \
             docker-compose.yml .env.example scripts/install.sh package.json package-lock.json tsconfig.json
 
@@ -86,6 +96,7 @@ jobs:
         continue-on-error: true
         env:
           NODE_AUTH_TOKEN: ${{ env.NPM_TOKEN }}
+        working-directory: ./release/npm-package
         run: npm publish --access public
 
       - name: Set up Docker Buildx
@@ -112,6 +123,13 @@ jobs:
           tags: |
             ghcr.io/${{ steps.meta.outputs.owner_lc }}/testcase-generator:${{ steps.meta.outputs.version }}
             ghcr.io/${{ steps.meta.outputs.owner_lc }}/testcase-generator:latest
+          labels: |
+            org.opencontainers.image.title=testcase-generator
+            org.opencontainers.image.description=AI-powered test case generation for PRDs, specs, and multimodal QA inputs. npm install -g @classmatexuxu/testcase-generator@${{ steps.meta.outputs.version }}
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.url=https://github.com/${{ github.repository }}/releases/tag/v${{ steps.meta.outputs.version }}
+            org.opencontainers.image.documentation=https://github.com/${{ github.repository }}/releases/tag/v${{ steps.meta.outputs.version }}
+            org.opencontainers.image.licenses=MIT
 
       - name: Login to Docker Hub
         id: login_dockerhub
@@ -133,6 +151,13 @@ jobs:
           tags: |
             ${{ env.DOCKERHUB_USERNAME }}/testcase-generator:${{ steps.meta.outputs.version }}
             ${{ env.DOCKERHUB_USERNAME }}/testcase-generator:latest
+          labels: |
+            org.opencontainers.image.title=testcase-generator
+            org.opencontainers.image.description=AI-powered test case generation for PRDs, specs, and multimodal QA inputs. npm install -g @classmatexuxu/testcase-generator@${{ steps.meta.outputs.version }}
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.url=https://github.com/${{ github.repository }}/releases/tag/v${{ steps.meta.outputs.version }}
+            org.opencontainers.image.documentation=https://github.com/${{ github.repository }}/releases/tag/v${{ steps.meta.outputs.version }}
+            org.opencontainers.image.licenses=MIT
 
       - name: Generate release notes
         shell: bash
@@ -143,7 +168,9 @@ jobs:
           OWNER_LC="${{ steps.meta.outputs.owner_lc }}"
           RELEASE_DOWNLOAD_BASE="https://github.com/${REPO}/releases/download/${TAG}"
           PACKAGE_TGZ_URL="${RELEASE_DOWNLOAD_BASE}/testcase-generator-${VERSION}.tgz"
+          PACKAGE_ZIP_URL="${RELEASE_DOWNLOAD_BASE}/testcase-generator-${VERSION}.zip"
           BUNDLE_TGZ_URL="${RELEASE_DOWNLOAD_BASE}/testcase-generator-${VERSION}-bundle.tgz"
+          BUNDLE_ZIP_URL="${RELEASE_DOWNLOAD_BASE}/testcase-generator-${VERSION}-bundle.zip"
           SOURCE_ZIP_URL="https://github.com/${REPO}/archive/refs/tags/${TAG}.zip"
           SOURCE_TGZ_URL="https://github.com/${REPO}/archive/refs/tags/${TAG}.tar.gz"
           GHCR_PACKAGE_URL="https://github.com/${REPO}/pkgs/container/testcase-generator"
@@ -200,7 +227,9 @@ jobs:
           ${DOCKERHUB_STATUS_LINE}
           - GitHub Release assets:
             - [testcase-generator-${VERSION}.tgz](${PACKAGE_TGZ_URL})
+            - [testcase-generator-${VERSION}.zip](${PACKAGE_ZIP_URL})
             - [testcase-generator-${VERSION}-bundle.tgz](${BUNDLE_TGZ_URL})
+            - [testcase-generator-${VERSION}-bundle.zip](${BUNDLE_ZIP_URL})
 
           ### Quick Start
 
@@ -208,7 +237,9 @@ jobs:
           ${GHCR_QUICKSTART_LINE}
           ${DOCKERHUB_QUICKSTART_LINE}
           - Release asset (package tarball): [testcase-generator-${VERSION}.tgz](${PACKAGE_TGZ_URL})
+          - Release asset (package zip): [testcase-generator-${VERSION}.zip](${PACKAGE_ZIP_URL})
           - Release asset (standalone bundle): [testcase-generator-${VERSION}-bundle.tgz](${BUNDLE_TGZ_URL})
+          - Release asset (standalone bundle zip): [testcase-generator-${VERSION}-bundle.zip](${BUNDLE_ZIP_URL})
 
           ### What Is Included
 
@@ -222,6 +253,7 @@ jobs:
           - Default standalone port: \`3456\`
           - Configure at least one provider API key before first run.
           - For Docker and env-based startup, \`AI_PROVIDER=anthropic\` is the default recommendation.
+          - GitHub Packages hosts container images; downloadable zip assets are attached in GitHub Releases.
           EOF
 
       - name: Create or update GitHub release
@@ -233,6 +265,7 @@ jobs:
           overwrite_files: true
           files: |
             release/*.tgz
+            release/*.zip
 
       - name: Check publish results
         if: always()

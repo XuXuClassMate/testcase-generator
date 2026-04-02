@@ -1,7 +1,7 @@
 {
   "name": "@classmatexuxu/testcase-generator",
   "version": "1.0.0",
-  "description": "AI-powered test case generator plugin for OpenClaw",
+  "description": "AI-powered test case generation for PRDs, specs, and multimodal QA inputs",
   "main": "./dist/index.js",
   "bin": {
     "testcase-generator": "./dist/index.js"
@@ -44,6 +44,7 @@
     "start": "node dist/index.js --standalone",
     "standalone": "ts-node src/standalone.ts",
     "standalone:build": "tsc && node dist/standalone.js",
+    "prepare:npm-package": "node scripts/prepare-npm-package.js",
     "prepack": "npm run build",
     "clean": "rm -rf dist"
   },
@@ -74,5 +75,8 @@
   },
   "openclaw": {
     "extensions": ["./dist/index.js"]
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

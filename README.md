@@ -168,6 +168,7 @@ Then configure `models[]` in your OpenClaw config. A full example lives in [docs
 GitHub Actions currently automates:
 
 - npm publishing
+- npm package README publishing from `docs/npm-readme.md`
 - Docker Hub publishing
 - GHCR publishing
 - Docker Hub overview sync from `docs/dockerhub-overview.md`

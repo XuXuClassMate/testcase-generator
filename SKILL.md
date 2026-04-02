@@ -77,18 +77,3 @@ Generate Chinese test cases for the pre-release stage from this PRD
 | Security | 15 | Dev Manager |
 
 Terminates when: score ≥ 90 · OR · no new issues · OR · 5 rounds max
-
-## Deployment
-
-This skill runs as an OpenClaw plugin. Install:
-
-```bash
-openclaw plugins install -l /path/to/testcase-generator
-openclaw gateway restart
-```
-
-Or run standalone:
-
-```bash
-ANTHROPIC_API_KEY=sk-ant-... node dist/index.js --standalone
-```

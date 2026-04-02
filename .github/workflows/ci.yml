@@ -29,5 +29,8 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Prepare npm package
+        run: npm run prepare:npm-package
+
       - name: Verify npm package contents
-        run: npm pack --dry-run
+        run: npm pack --dry-run ./release/npm-package --pack-destination release
