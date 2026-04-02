@@ -8,7 +8,7 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/xuxuclassmate/testcase-generator)](https://hub.docker.com/r/xuxuclassmate/testcase-generator)
 [![npm](https://img.shields.io/npm/v/%40classmatexuxu%2Ftestcase-generator?label=npm)](https://www.npmjs.com/package/@classmatexuxu/testcase-generator)
 
-[GitHub](https://github.com/XuXuClassMate/testcase-generator) • [Docker Hub](https://hub.docker.com/r/xuxuclassmate/testcase-generator) • [npm](https://www.npmjs.com/package/@classmatexuxu/testcase-generator) • [Detailed Docs](./docs/README.md)
+[GitHub](https://github.com/XuXuClassMate/testcase-generator) • [Docker Hub](https://hub.docker.com/r/xuxuclassmate/testcase-generator) • [npm](https://www.npmjs.com/package/@classmatexuxu/testcase-generator) • [Detailed Docs](https://github.com/XuXuClassMate/testcase-generator/blob/main/docs/README.md)
 
 </div>
 
@@ -78,31 +78,6 @@ docker run -d \
 
 Open [http://localhost:3456](http://localhost:3456).
 
-### 4. Useful container commands
-
-```bash
-docker logs -f testcase-generator
-docker stop testcase-generator
-docker rm testcase-generator
-```
-
-## Docker Compose
-
-If you are running from the repository source:
-
-```bash
-git clone https://github.com/XuXuClassMate/testcase-generator.git
-cd testcase-generator
-cp .env.example .env
-docker compose up -d --build
-```
-
-Stop it with:
-
-```bash
-docker compose down
-```
-
 ## Environment Variables
 
 | Variable | Default | Description |
@@ -161,19 +136,9 @@ openclaw gateway restart
 openclaw plugins list
 ```
 
-Then configure `models[]` in your OpenClaw config. A full example lives in [docs/README.md](./docs/README.md).
+For the full OpenClaw configuration example, see:
 
-## Release and Distribution
-
-GitHub Actions currently automates:
-
-- npm publishing
-- Docker Hub publishing
-- GHCR publishing
-- GitHub Releases asset publishing
-- free code scanning and dependency/security checks on merges to `main`
-
-Release publishing is triggered by pushing a tag like `v1.0.0`, and the tag must match `package.json`'s version.
+- https://github.com/XuXuClassMate/testcase-generator/blob/main/docs/README.md
 
 ## Links
 
@@ -181,4 +146,3 @@ Release publishing is triggered by pushing a tag like `v1.0.0`, and the tag must
 - Docker Hub: https://hub.docker.com/r/xuxuclassmate/testcase-generator
 - npm: https://www.npmjs.com/package/@classmatexuxu/testcase-generator
 - Releases: https://github.com/XuXuClassMate/testcase-generator/releases
-- Detailed docs: [docs/README.md](./docs/README.md)
