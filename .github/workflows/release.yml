@@ -123,15 +123,34 @@ jobs:
         if: always()
         shell: bash
         run: |
+          npm_outcome="${{ steps.publish_npm.outcome }}"
+          ghcr_login_outcome="${{ steps.login_ghcr.outcome }}"
+          ghcr_publish_outcome="${{ steps.publish_ghcr.outcome }}"
+          dockerhub_login_outcome="${{ steps.login_dockerhub.outcome }}"
+          dockerhub_publish_outcome="${{ steps.publish_dockerhub.outcome }}"
+
+          {
+            echo "## Publish outcomes"
+            echo ""
+            echo "- npm: ${npm_outcome}"
+            echo "- ghcr login: ${ghcr_login_outcome}"
+            echo "- ghcr publish: ${ghcr_publish_outcome}"
+            echo "- dockerhub login: ${dockerhub_login_outcome}"
+            echo "- dockerhub publish: ${dockerhub_publish_outcome}"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
           failures=()
 
-          if [[ "${{ steps.publish_npm.outcome }}" == "failure" ]]; then
+          if [[ "${npm_outcome}" == "failure" ]]; then
+            echo "::error title=Publish target failed::npm publish failed"
             failures+=("npm")
           fi
-          if [[ "${{ steps.login_ghcr.outcome }}" == "failure" || "${{ steps.publish_ghcr.outcome }}" == "failure" ]]; then
+          if [[ "${ghcr_login_outcome}" == "failure" || "${ghcr_publish_outcome}" == "failure" ]]; then
+            echo "::error title=Publish target failed::GHCR publish failed"
             failures+=("ghcr")
           fi
-          if [[ "${{ steps.login_dockerhub.outcome }}" == "failure" || "${{ steps.publish_dockerhub.outcome }}" == "failure" ]]; then
+          if [[ "${dockerhub_login_outcome}" == "failure" || "${dockerhub_publish_outcome}" == "failure" ]]; then
+            echo "::error title=Publish target failed::Docker Hub publish failed"
             failures+=("dockerhub")
           fi
 
