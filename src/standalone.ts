@@ -16,6 +16,7 @@
 import express, { Request, Response, NextFunction } from "express";
 import multer from "multer";
 import cors from "cors";
+import rateLimit from "express-rate-limit";
 import path from "path";
 import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
@@ -48,7 +49,28 @@ const sessions = new Map<string, Session>();
 export async function startServer(cfg: PluginConfig): Promise<void> {
   const app = express();
   const generator = new TestCaseGenerator(cfg);
+  const generalLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 300,
+    standardHeaders: "draft-7",
+    legacyHeaders: false,
+  });
+  const generationLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000,
+    limit: 30,
+    standardHeaders: "draft-7",
+    legacyHeaders: false,
+    message: { success: false, error: "Too many generation requests. Please try again later." },
+  });
+  const downloadLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 120,
+    standardHeaders: "draft-7",
+    legacyHeaders: false,
+    message: { success: false, error: "Too many download requests. Please try again later." },
+  });
 
+  app.use(generalLimiter);
   app.use(cors());
   app.use(express.json({ limit: "50mb" }));
 
@@ -87,7 +109,7 @@ export async function startServer(cfg: PluginConfig): Promise<void> {
 
   // ── Generate (with SSE streaming) ──────────────────────────────────────────
 
-  app.post("/api/generate", upload.array("files", 20), async (req: Request, res: Response) => {
+  app.post("/api/generate", generationLimiter, upload.array("files", 20), async (req: Request, res: Response) => {
     const useSSE = req.headers.accept?.includes("text/event-stream");
 
     if (useSSE) {
@@ -166,7 +188,7 @@ export async function startServer(cfg: PluginConfig): Promise<void> {
 
   // ── Refine ─────────────────────────────────────────────────────────────────
 
-  app.post("/api/refine", upload.array("files", 20), async (req: Request, res: Response) => {
+  app.post("/api/refine", generationLimiter, upload.array("files", 20), async (req: Request, res: Response) => {
     const useSSE = req.headers.accept?.includes("text/event-stream");
     if (useSSE) {
       res.setHeader("Content-Type", "text/event-stream");
@@ -236,7 +258,7 @@ export async function startServer(cfg: PluginConfig): Promise<void> {
 
   // ── Downloads ──────────────────────────────────────────────────────────────
 
-  app.get("/api/download/excel/:id", (req, res) => {
+  app.get("/api/download/excel/:id", downloadLimiter, (req, res) => {
     const s = sessions.get(req.params.id);
     if (!s?.excelPath || !fs.existsSync(s.excelPath)) {
       res.status(404).json({ success: false, error: "File not found" }); return;
@@ -244,7 +266,7 @@ export async function startServer(cfg: PluginConfig): Promise<void> {
     res.download(s.excelPath, "test-cases.xlsx");
   });
 
-  app.get("/api/download/markdown/:id", (req, res) => {
+  app.get("/api/download/markdown/:id", downloadLimiter, (req, res) => {
     const s = sessions.get(req.params.id);
     if (!s?.mdPath || !fs.existsSync(s.mdPath)) {
       res.status(404).json({ success: false, error: "File not found" }); return;
@@ -252,7 +274,7 @@ export async function startServer(cfg: PluginConfig): Promise<void> {
     res.download(s.mdPath, "test-cases.md");
   });
 
-  app.get("/api/download/xmind/:id", (req, res) => {
+  app.get("/api/download/xmind/:id", downloadLimiter, (req, res) => {
     const s = sessions.get(req.params.id);
     if (!s?.xmindPath || !fs.existsSync(s.xmindPath)) {
       res.status(404).json({ success: false, error: "XMind file not found" }); return;

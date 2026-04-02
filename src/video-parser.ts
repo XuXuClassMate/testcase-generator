@@ -5,7 +5,7 @@
  * Requires: ffmpeg installed on the system (see README for installation)
  */
 
-import { execSync, spawnSync } from "child_process";
+import { spawnSync } from "child_process";
 import fs from "fs";
 import path from "path";
 import os from "os";
@@ -18,8 +18,8 @@ const MAX_FRAME_SIZE_PX = 1024;     // Resize to max this dimension to save toke
 
 function checkFFmpeg(): boolean {
   try {
-    execSync("ffmpeg -version", { stdio: "ignore" });
-    return true;
+    const result = spawnSync("ffmpeg", ["-version"], { stdio: "ignore" });
+    return result.status === 0;
   } catch {
     return false;
   }
@@ -29,11 +29,25 @@ function checkFFmpeg(): boolean {
 
 function getVideoDuration(filePath: string): number {
   try {
-    const result = execSync(
-      `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${filePath}"`,
+    const result = spawnSync(
+      "ffprobe",
+      [
+        "-v",
+        "error",
+        "-show_entries",
+        "format=duration",
+        "-of",
+        "default=noprint_wrappers=1:nokey=1",
+        filePath,
+      ],
       { encoding: "utf-8" }
     );
-    return parseFloat(result.trim()) || 60;
+
+    if (result.status !== 0 || !result.stdout) {
+      return 60;
+    }
+
+    return parseFloat(result.stdout.trim()) || 60;
   } catch {
     return 60;
   }
