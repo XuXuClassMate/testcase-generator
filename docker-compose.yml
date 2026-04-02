@@ -10,13 +10,10 @@ services:
       - "${PORT:-3456}:3456"
     environment:
       # ── AI Provider ──────────────────────────────────────────────────────
-      AI_PROVIDER: ${AI_PROVIDER:-claude}           # claude | openai | deepseek | minimax
+      AI_PROVIDER: ${AI_PROVIDER:-anthropic}        # anthropic | openai | deepseek
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
-      MINIMAX_API_KEY: ${MINIMAX_API_KEY:-}
-      QWEN_API_KEY: ${QWEN_API_KEY:-}
-      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
 
       # ── App config ───────────────────────────────────────────────────────
       LANGUAGE: ${LANGUAGE:-en}                     # en | zh

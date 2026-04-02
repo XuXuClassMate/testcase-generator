@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
-# AI TestCase Generator — Universal Installer
-# Supports: npm · local · Docker · Homebrew · pip (wrapper) · apt (deb) · go
+# AI TestCase Generator — Installer
+# Supports: npm · local · Docker
 #
 # Usage:
 #   ./scripts/install.sh            → auto-detect best method
@@ -39,8 +39,6 @@ if [ "$MODE" = "auto" ]; then
     MODE="--docker"
   elif command -v npm &>/dev/null; then
     MODE="--npm"
-  elif command -v brew &>/dev/null; then
-    MODE="--brew"
   else
     MODE="--local"
   fi
@@ -93,14 +91,6 @@ EOF
   info "Web UI:     http://localhost:3456"
 }
 
-# ── Homebrew (macOS/Linux) ────────────────────────────────────────────────────
-install_brew() {
-  info "Installing via Homebrew..."
-  command -v brew &>/dev/null || error "Homebrew not found. Install from https://brew.sh"
-  warn "Homebrew tap not yet published. Falling back to npm install."
-  install_npm
-}
-
 # ── Local dev ─────────────────────────────────────────────────────────────────
 install_local() {
   info "Installing locally (development mode)..."
@@ -118,52 +108,20 @@ install_local() {
   print_env_reminder
 }
 
-# ── apt (Debian/Ubuntu) ───────────────────────────────────────────────────────
-install_apt() {
-  info "Checking apt prerequisites..."
-  # Install node via nodesource if needed
-  if ! command -v node &>/dev/null; then
-    info "Installing Node.js 20 via NodeSource..."
-    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-    sudo apt-get install -y nodejs
-  fi
-  # Install ffmpeg
-  sudo apt-get install -y ffmpeg 2>/dev/null || warn "ffmpeg install failed (video support disabled)"
-  install_npm
-}
-
-# ── pip wrapper (Python users) ────────────────────────────────────────────────
-install_pip() {
-  info "pip mode: installing Node.js wrapper..."
-  command -v pip &>/dev/null || error "pip not found."
-  warn "pip installation is a thin wrapper that requires Node.js."
-  pip install testcase-generator-ai 2>/dev/null || {
-    warn "pip package not yet published, using npm instead."
-    install_npm
-  }
-}
-
-# ── go install ────────────────────────────────────────────────────────────────
-install_go() {
-  info "go mode: installing CLI proxy..."
-  command -v go &>/dev/null || error "Go not found."
-  warn "Go package not yet published, using npm instead."
-  install_npm
-}
-
 # ── Env reminder ──────────────────────────────────────────────────────────────
 print_env_reminder() {
   echo ""
   echo -e "${YELLOW}⚙  Set your API keys before starting:${NC}"
   echo ""
+  echo "  export AI_PROVIDER=anthropic"
   echo "  export ANTHROPIC_API_KEY=sk-ant-..."
   echo "  export OPENAI_API_KEY=sk-..."
   echo "  export DEEPSEEK_API_KEY=..."
   echo ""
   echo "  # Optional:"
-  echo "  export AI_PROVIDER=claude    # claude|openai|deepseek|minimax"
   echo "  export LANGUAGE=en           # en|zh"
   echo "  export PORT=3456"
+  echo "  export OUTPUT_DIR=./testcase-output"
   echo ""
 }
 
@@ -182,7 +140,7 @@ check_openclaw() {
 check_ffmpeg() {
   if ! command -v ffmpeg &>/dev/null; then
     warn "ffmpeg not found — video parsing will be disabled."
-    echo "  Install: brew install ffmpeg  |  apt install ffmpeg  |  choco install ffmpeg"
+    echo "  Install ffmpeg with your system package manager if you need video parsing."
   fi
 }
 
@@ -190,12 +148,8 @@ check_ffmpeg() {
 case "$MODE" in
   --npm)    install_npm ;;
   --docker) install_docker ;;
-  --brew)   install_brew ;;
   --local)  install_local ;;
-  --apt)    install_apt ;;
-  --pip)    install_pip ;;
-  --go)     install_go ;;
-  *)        error "Unknown mode: $MODE. Use --npm|--docker|--brew|--local|--apt|--pip|--go" ;;
+  *)        error "Unknown mode: $MODE. Use --npm|--docker|--local" ;;
 esac
 
 check_ffmpeg

@@ -16,7 +16,7 @@ Exports to **Excel**, **Markdown**, and **XMind** mind map.
 - [Installation](#installation)
 - [OpenClaw Plugin Mode](#openclaw-plugin-mode)
 - [Standalone Web Mode](#standalone-web-mode)
-- [Deployment Methods](#deployment-methods)
+- [Supported Run Modes](#supported-run-modes)
 - [API Reference](#api-reference)
 - [Project Structure](#project-structure)
 
@@ -209,7 +209,7 @@ Total score: **100 points**
 ### Prerequisites
 
 - Node.js ≥ 18
-- npm / pnpm
+- npm
 - `ffmpeg` (optional, for video frame extraction)
 
 ```bash
@@ -288,54 +288,141 @@ The agent will automatically invoke the `generate_test_cases` tool.
 
 ## Standalone Web Mode
 
+### Local source run
+
 ```bash
-# Set environment variables
+cp .env.example .env
+```
+
+Edit `.env` and fill at least one API key:
+
+```bash
+AI_PROVIDER=anthropic
+ANTHROPIC_API_KEY=sk-ant-...
+LANGUAGE=en
+ENABLE_REVIEW=true
+REVIEW_THRESHOLD=90
+MAX_REVIEW_ROUNDS=5
+PORT=3456
+OUTPUT_DIR=./testcase-output
+```
+
+Then start the app:
+
+```bash
+npm run build
+npm run start
+```
+
+### Run directly from source without `.env`
+
+```bash
+export AI_PROVIDER=anthropic
 export ANTHROPIC_API_KEY=sk-ant-...
-export OPENAI_API_KEY=sk-...
-export DEEPSEEK_API_KEY=sk-...
+export LANGUAGE=en
+export PORT=3456
 
-# Start
 npm run standalone
-
-# Custom port
-PORT=8080 npm run standalone
 ```
 
 Open `http://localhost:3456` for the full Web UI.
 
 ---
 
-## Deployment Methods
+## Supported Run Modes
+
+Only these run modes are currently supported:
+
+- Local source run
+- OpenClaw plugin
+- npm global install
+- Docker
+
+### npm global install
 
 ```bash
-# npm global
 npm install -g testcase-generator
 
-# Local dev
-npm run standalone
+export AI_PROVIDER=anthropic
+export ANTHROPIC_API_KEY=sk-ant-...
+export PORT=3456
 
-# Docker
-docker compose up -d
-
-# Universal installer (auto-detects best method)
-chmod +x scripts/install.sh && ./scripts/install.sh
-
-# Specific method
-./scripts/install.sh --docker   # Docker Compose
-./scripts/install.sh --npm      # npm global
-./scripts/install.sh --apt      # apt + Node.js install (Debian/Ubuntu)
-./scripts/install.sh --brew     # Homebrew (macOS)
+testcase-generator --standalone
 ```
 
-### Environment variables
+### Docker Compose
+
+Create a `.env` file first:
+
+```bash
+cp .env.example .env
+```
+
+Example `.env`:
+
+```bash
+AI_PROVIDER=anthropic
+ANTHROPIC_API_KEY=sk-ant-...
+OPENAI_API_KEY=
+DEEPSEEK_API_KEY=
+LANGUAGE=en
+ENABLE_REVIEW=true
+REVIEW_THRESHOLD=90
+MAX_REVIEW_ROUNDS=5
+PORT=3456
+OUTPUT_DIR=./testcase-output
+```
+
+Start the service:
+
+```bash
+docker compose up -d --build
+```
+
+Stop it:
+
+```bash
+docker compose down
+```
+
+### Docker run
+
+Build the image:
+
+```bash
+docker build -t testcase-generator:local .
+```
+
+Run the container with env vars:
+
+```bash
+docker run -d \
+  --name testcase-generator \
+  -p 3456:3456 \
+  -e AI_PROVIDER=anthropic \
+  -e ANTHROPIC_API_KEY=sk-ant-... \
+  -e LANGUAGE=en \
+  -e ENABLE_REVIEW=true \
+  -e REVIEW_THRESHOLD=90 \
+  -e MAX_REVIEW_ROUNDS=5 \
+  -e OUTPUT_DIR=/data/testcase-output \
+  -v testcase-generator-data:/data/testcase-output \
+  testcase-generator:local
+```
+
+### Runtime environment variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PORT` | `3456` | HTTP server port |
+| `AI_PROVIDER` | `anthropic` | Primary generator for env-based startup (`anthropic` \| `openai` \| `deepseek`) |
+| `ANTHROPIC_API_KEY` | empty | Anthropic API key |
+| `OPENAI_API_KEY` | empty | OpenAI API key |
+| `DEEPSEEK_API_KEY` | empty | DeepSeek API key |
 | `LANGUAGE` | `en` | Default language (`en` / `zh`) |
 | `ENABLE_REVIEW` | `true` | Enable review loop |
 | `REVIEW_THRESHOLD` | `90` | Score threshold to stop review |
 | `MAX_REVIEW_ROUNDS` | `5` | Maximum review iterations |
+| `PORT` | `3456` | HTTP server port |
 | `OUTPUT_DIR` | `./testcase-output` | Directory for generated files |
 
 ---
@@ -387,7 +474,7 @@ testcase-generator/
 ├── public/
 │   └── index.html             ← Standalone web UI
 ├── scripts/
-│   └── install.sh             ← Universal installer
+│   └── install.sh             ← Helper installer for supported run modes
 ├── docs/
 │   ├── README.md              ← Detailed setup and usage guide
 │   └── skill.md               ← Skill reference
