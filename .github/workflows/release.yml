@@ -66,15 +66,21 @@ jobs:
             release/*.tgz
 
       - name: Publish to npm
+        id: publish_npm
         if: ${{ env.NPM_TOKEN != '' }}
+        continue-on-error: true
         env:
           NODE_AUTH_TOKEN: ${{ env.NPM_TOKEN }}
         run: npm publish --access public
 
       - name: Set up Docker Buildx
+        id: setup_buildx
+        continue-on-error: true
         uses: docker/setup-buildx-action@v3
 
       - name: Login to GHCR
+        id: login_ghcr
+        continue-on-error: true
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -82,6 +88,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push GHCR image
+        id: publish_ghcr
+        continue-on-error: true
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -91,14 +99,18 @@ jobs:
             ghcr.io/${{ steps.meta.outputs.owner_lc }}/testcase-generator:latest
 
       - name: Login to Docker Hub
+        id: login_dockerhub
         if: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != '' }}
+        continue-on-error: true
         uses: docker/login-action@v3
         with:
           username: ${{ env.DOCKERHUB_USERNAME }}
           password: ${{ env.DOCKERHUB_TOKEN }}
 
       - name: Build and push Docker Hub image
+        id: publish_dockerhub
         if: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != '' }}
+        continue-on-error: true
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -106,3 +118,24 @@ jobs:
           tags: |
             ${{ env.DOCKERHUB_USERNAME }}/testcase-generator:${{ steps.meta.outputs.version }}
             ${{ env.DOCKERHUB_USERNAME }}/testcase-generator:latest
+
+      - name: Check publish results
+        if: always()
+        shell: bash
+        run: |
+          failures=()
+
+          if [[ "${{ steps.publish_npm.outcome }}" == "failure" ]]; then
+            failures+=("npm")
+          fi
+          if [[ "${{ steps.login_ghcr.outcome }}" == "failure" || "${{ steps.publish_ghcr.outcome }}" == "failure" ]]; then
+            failures+=("ghcr")
+          fi
+          if [[ "${{ steps.login_dockerhub.outcome }}" == "failure" || "${{ steps.publish_dockerhub.outcome }}" == "failure" ]]; then
+            failures+=("dockerhub")
+          fi
+
+          if [[ ${#failures[@]} -gt 0 ]]; then
+            echo "Failed publish targets: ${failures[*]}" >&2
+            exit 1
+          fi
