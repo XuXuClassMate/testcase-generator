@@ -1,0 +1,41 @@
+{
+  "id": "testcase-generator",
+  "name": "AI Test Case Generator",
+  "version": "2.0.0",
+  "description": "Generate high-quality test cases from docs/images/video with multi-model review loop (Test Manager · Dev Manager · Product Manager).",
+  "author": "your-org",
+  "license": "MIT",
+  "entry": "./dist/index.js",
+  "skill": "./SKILL.md",
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "models": {
+        "type": "array",
+        "description": "List of AI model configurations. See README § Model Configuration.",
+        "items": {
+          "type": "object",
+          "required": ["id", "vendor", "model", "apiKey", "role"],
+          "properties": {
+            "id":      { "type": "string", "description": "Unique slot ID" },
+            "label":   { "type": "string", "description": "Display name" },
+            "vendor":  { "type": "string", "enum": ["anthropic","openai","deepseek","minimax","qwen","gemini","moonshot","zhipu","custom"] },
+            "model":   { "type": "string", "description": "Model name, e.g. claude-opus-4-5" },
+            "baseUrl": { "type": "string", "description": "Custom API base URL (optional for standard vendors)" },
+            "apiKey":  { "type": "string", "description": "API key for this model" },
+            "role":    { "type": "string", "enum": ["generator","reviewer","both"] },
+            "params":  { "type": "object", "description": "Extra params, e.g. { temperature: 0.2 }" }
+          }
+        }
+      },
+      "language":             { "type": "string", "enum": ["en","zh"], "default": "en" },
+      "enableReviewLoop":     { "type": "boolean", "default": true },
+      "reviewScoreThreshold": { "type": "number",  "default": 90,   "description": "Stop review when score >= this" },
+      "maxReviewRounds":      { "type": "number",  "default": 5 },
+      "standalonePort":       { "type": "number",  "default": 3456 },
+      "outputDir":            { "type": "string",  "default": "./testcase-output" }
+    }
+  },
+  "commands": { "enabled": true, "prefix": "/testgen" },
+  "tools": [{ "name": "generate_test_cases", "description": "Generate and review test cases from requirements" }]
+}

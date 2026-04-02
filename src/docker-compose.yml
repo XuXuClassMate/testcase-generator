@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  testcase-generator:
+    build: .
+    image: testcase-generator:latest
+    container_name: testcase-generator
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3456}:3456"
+    environment:
+      # ── AI Provider ──────────────────────────────────────────────────────
+      AI_PROVIDER: ${AI_PROVIDER:-claude}           # claude | openai | deepseek | minimax
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      MINIMAX_API_KEY: ${MINIMAX_API_KEY:-}
+      QWEN_API_KEY: ${QWEN_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+
+      # ── App config ───────────────────────────────────────────────────────
+      LANGUAGE: ${LANGUAGE:-en}                     # en | zh
+      ENABLE_REVIEW: ${ENABLE_REVIEW:-true}
+      REVIEW_THRESHOLD: ${REVIEW_THRESHOLD:-90}
+      MAX_REVIEW_ROUNDS: ${MAX_REVIEW_ROUNDS:-5}
+      OUTPUT_DIR: /data/testcase-output
+    volumes:
+      - testcase-output:/data/testcase-output
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3456/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  testcase-output:
