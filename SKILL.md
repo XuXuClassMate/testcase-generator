@@ -1,6 +1,6 @@
 ---
 name: ai-testcase-generator
-version: 2.0.0
+version: 1.0.0
 description: Generate high-quality test cases from requirements using AI with multi-model review
 author: your-org
 tags: [testing, qa, testcases, requirements]

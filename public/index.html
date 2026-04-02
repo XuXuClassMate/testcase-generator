@@ -1,860 +1,1977 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Test Case Generator</title>
-  <style>
-    :root {
-      --bg: #0d0f18;
-      --surface: #161827;
-      --surface2: #1e2135;
-      --surface3: #252840;
-      --border: #2a2d4a;
-      --accent: #6366f1;
-      --accent2: #a78bfa;
-      --accent3: #38bdf8;
-      --success: #34d399;
-      --warning: #fbbf24;
-      --danger: #f87171;
-      --text: #e2e8f0;
-      --muted: #64748b;
-      --r: 10px;
-      --shadow: 0 8px 32px rgba(0,0,0,.5);
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: var(--bg); color: var(--text); font-family: -apple-system,'Segoe UI',Inter,sans-serif; min-height: 100vh; }
-    a { color: var(--accent2); }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>AI Test Case Generator</title>
+        <style>
+            :root {
+                --bg: #0d0f18;
+                --surface: #161827;
+                --surface2: #1e2135;
+                --surface3: #252840;
+                --border: #2a2d4a;
+                --accent: #6366f1;
+                --accent2: #a78bfa;
+                --accent3: #38bdf8;
+                --success: #34d399;
+                --warning: #fbbf24;
+                --danger: #f87171;
+                --text: #e2e8f0;
+                --muted: #64748b;
+                --r: 10px;
+                --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            }
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                background: var(--bg);
+                color: var(--text);
+                font-family: -apple-system, "Segoe UI", Inter, sans-serif;
+                min-height: 100vh;
+            }
+            a {
+                color: var(--accent2);
+            }
 
-    /* ── Layout ─────────────────────────────────────────────────────────── */
-    .app { display: grid; grid-template-rows: 56px 1fr; height: 100vh; overflow: hidden; }
-    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 20px; display: flex; align-items: center; gap: 10px; }
-    .logo { font-size: 24px; }
-    .h-title { font-size: 16px; font-weight: 700; background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .h-version { font-size: 11px; background: rgba(99,102,241,.2); color: var(--accent2); padding: 2px 8px; border-radius: 12px; border: 1px solid rgba(99,102,241,.3); }
-    .h-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+            /* ── Layout ─────────────────────────────────────────────────────────── */
+            .app {
+                display: grid;
+                grid-template-rows: 56px 1fr;
+                height: 100vh;
+                overflow: hidden;
+            }
+            header {
+                background: var(--surface);
+                border-bottom: 1px solid var(--border);
+                padding: 0 20px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .h-title {
+                font-size: 16px;
+                font-weight: 700;
+                background: linear-gradient(
+                    90deg,
+                    var(--accent),
+                    var(--accent2),
+                    var(--accent3)
+                );
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+            }
+            .h-version {
+                font-size: 11px;
+                background: rgba(99, 102, 241, 0.2);
+                color: var(--accent2);
+                padding: 2px 8px;
+                border-radius: 12px;
+                border: 1px solid rgba(99, 102, 241, 0.3);
+            }
+            .h-right {
+                margin-left: auto;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
 
-    /* Language toggle */
-    .lang-toggle { display: flex; background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
-    .lang-btn { padding: 4px 14px; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--muted); border: none; background: transparent; transition: all .15s; }
-    .lang-btn.active { background: var(--accent); color: #fff; }
+            /* Language toggle */
+            .lang-toggle {
+                display: flex;
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                border-radius: 20px;
+                overflow: hidden;
+            }
+            .lang-btn {
+                padding: 4px 14px;
+                font-size: 12px;
+                font-weight: 600;
+                cursor: pointer;
+                color: var(--muted);
+                border: none;
+                background: transparent;
+                transition: all 0.15s;
+            }
+            .lang-btn.active {
+                background: var(--accent);
+                color: #fff;
+            }
 
-    main { display: grid; grid-template-columns: 400px 1fr; overflow: hidden; }
+            main {
+                display: grid;
+                grid-template-columns: 400px 1fr;
+                overflow: hidden;
+            }
 
-    /* ── Left Panel ─────────────────────────────────────────────────────── */
-    .left { background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; }
-    .panel { padding: 16px 18px; border-bottom: 1px solid var(--border); }
-    .panel:last-child { border-bottom: none; }
-    .panel-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
-    .panel-label .badge-hot { background: linear-gradient(90deg,#f97316,#ef4444); color: #fff; font-size: 10px; padding: 1px 6px; border-radius: 10px; letter-spacing: 0; text-transform: none; }
+            /* ── Left Panel ─────────────────────────────────────────────────────── */
+            .left {
+                background: var(--surface);
+                border-right: 1px solid var(--border);
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+            }
+            .panel {
+                padding: 16px 18px;
+                border-bottom: 1px solid var(--border);
+            }
+            .panel:last-child {
+                border-bottom: none;
+            }
+            .panel-label {
+                font-size: 11px;
+                font-weight: 700;
+                color: var(--muted);
+                text-transform: uppercase;
+                letter-spacing: 0.8px;
+                margin-bottom: 12px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+            .panel-label .badge-hot {
+                background: linear-gradient(90deg, #f97316, #ef4444);
+                color: #fff;
+                font-size: 10px;
+                padding: 1px 6px;
+                border-radius: 10px;
+                letter-spacing: 0;
+                text-transform: none;
+            }
 
-    /* Stage selector */
-    .stage-grid { display: flex; flex-direction: column; gap: 6px; }
-    .stage-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; cursor: pointer; text-align: left; transition: all .15s; }
-    .stage-btn.active { border-color: var(--accent); background: rgba(99,102,241,.1); }
-    .stage-btn:hover:not(.active) { border-color: var(--border); background: var(--surface3); }
-    .stage-name { font-size: 13px; font-weight: 600; color: var(--text); }
-    .stage-btn.active .stage-name { color: var(--accent2); }
-    .stage-desc { font-size: 11px; color: var(--muted); margin-top: 3px; }
+            /* Stage selector */
+            .stage-grid {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+            }
+            .stage-btn {
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 10px 12px;
+                cursor: pointer;
+                text-align: left;
+                transition: all 0.15s;
+            }
+            .stage-btn.active {
+                border-color: var(--accent);
+                background: rgba(99, 102, 241, 0.1);
+            }
+            .stage-btn:hover:not(.active) {
+                border-color: var(--border);
+                background: var(--surface3);
+            }
+            .stage-name {
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--text);
+            }
+            .stage-btn.active .stage-name {
+                color: var(--accent2);
+            }
+            .stage-desc {
+                font-size: 11px;
+                color: var(--muted);
+                margin-top: 3px;
+            }
 
-    /* Provider selector */
-    .provider-group { margin-bottom: 10px; }
-    .provider-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
-    .provider-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-    .provider-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); padding: 7px 6px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all .15s; text-align: center; }
-    .provider-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(99,102,241,.12); }
-    .provider-btn:hover:not(.active) { border-color: #3a3d60; color: var(--text); }
-    .provider-btn.reviewer-active { border-color: var(--accent2); color: var(--accent2); background: rgba(167,139,250,.1); }
+            /* Provider selector */
+            .provider-group {
+                margin-bottom: 10px;
+            }
+            .provider-label {
+                font-size: 11px;
+                color: var(--muted);
+                margin-bottom: 6px;
+            }
+            .provider-row {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 6px;
+            }
+            .provider-btn {
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                color: var(--muted);
+                padding: 7px 6px;
+                border-radius: 7px;
+                cursor: pointer;
+                font-size: 12px;
+                font-weight: 600;
+                transition: all 0.15s;
+                text-align: center;
+            }
+            .provider-btn.active {
+                border-color: var(--accent);
+                color: var(--accent);
+                background: rgba(99, 102, 241, 0.12);
+            }
+            .provider-btn:hover:not(.active) {
+                border-color: #3a3d60;
+                color: var(--text);
+            }
+            .provider-btn.reviewer-active {
+                border-color: var(--accent2);
+                color: var(--accent2);
+                background: rgba(167, 139, 250, 0.1);
+            }
 
-    /* Review toggle */
-    .review-toggle { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
-    .toggle-track { width: 40px; height: 22px; background: var(--surface3); border-radius: 11px; cursor: pointer; position: relative; border: 1px solid var(--border); transition: background .2s; flex-shrink: 0; }
-    .toggle-track.on { background: var(--accent); border-color: var(--accent); }
-    .toggle-thumb { position: absolute; width: 16px; height: 16px; background: #fff; border-radius: 50%; top: 2px; left: 2px; transition: left .2s; }
-    .toggle-track.on .toggle-thumb { left: 20px; }
-    .toggle-label { font-size: 12px; color: var(--text); }
-    .toggle-sub { font-size: 11px; color: var(--muted); }
+            /* Review toggle */
+            .review-toggle {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-top: 10px;
+            }
+            .toggle-track {
+                width: 40px;
+                height: 22px;
+                background: var(--surface3);
+                border-radius: 11px;
+                cursor: pointer;
+                position: relative;
+                border: 1px solid var(--border);
+                transition: background 0.2s;
+                flex-shrink: 0;
+            }
+            .toggle-track.on {
+                background: var(--accent);
+                border-color: var(--accent);
+            }
+            .toggle-thumb {
+                position: absolute;
+                width: 16px;
+                height: 16px;
+                background: #fff;
+                border-radius: 50%;
+                top: 2px;
+                left: 2px;
+                transition: left 0.2s;
+            }
+            .toggle-track.on .toggle-thumb {
+                left: 20px;
+            }
+            .toggle-label {
+                font-size: 12px;
+                color: var(--text);
+            }
+            .toggle-sub {
+                font-size: 11px;
+                color: var(--muted);
+            }
 
-    /* Drop zone */
-    .drop-zone { border: 2px dashed var(--border); border-radius: var(--r); padding: 16px; text-align: center; cursor: pointer; transition: all .15s; position: relative; }
-    .drop-zone:hover, .drop-zone.drag { border-color: var(--accent); background: rgba(99,102,241,.05); }
-    .drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-    .drop-icon { font-size: 24px; margin-bottom: 6px; }
-    .drop-label { font-size: 12px; color: var(--muted); }
-    .drop-label span { color: var(--accent2); }
-    .drop-hint { font-size: 10px; color: var(--muted); margin-top: 3px; }
+            /* Drop zone */
+            .drop-zone {
+                border: 2px dashed var(--border);
+                border-radius: var(--r);
+                padding: 16px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.15s;
+                position: relative;
+            }
+            .drop-zone:hover,
+            .drop-zone.drag {
+                border-color: var(--accent);
+                background: rgba(99, 102, 241, 0.05);
+            }
+            .drop-zone input[type="file"] {
+                position: absolute;
+                inset: 0;
+                opacity: 0;
+                cursor: pointer;
+            }
+            .drop-icon {
+                font-size: 24px;
+                margin-bottom: 6px;
+            }
+            .drop-label {
+                font-size: 12px;
+                color: var(--muted);
+            }
+            .drop-label span {
+                color: var(--accent2);
+            }
+            .drop-hint {
+                font-size: 10px;
+                color: var(--muted);
+                margin-top: 3px;
+            }
 
-    .file-list { margin-top: 8px; display: flex; flex-direction: column; gap: 5px; }
-    .file-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; gap: 7px; font-size: 12px; }
-    .file-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .file-remove { cursor: pointer; color: var(--muted); font-size: 13px; flex-shrink: 0; }
-    .file-remove:hover { color: var(--danger); }
+            .file-list {
+                margin-top: 8px;
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+            }
+            .file-item {
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                padding: 6px 10px;
+                display: flex;
+                align-items: center;
+                gap: 7px;
+                font-size: 12px;
+            }
+            .file-name {
+                flex: 1;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .file-remove {
+                cursor: pointer;
+                color: var(--muted);
+                font-size: 13px;
+                flex-shrink: 0;
+            }
+            .file-remove:hover {
+                color: var(--danger);
+            }
 
-    /* Textarea & input */
-    textarea, .text-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13px; padding: 10px 12px; outline: none; line-height: 1.6; font-family: inherit; }
-    textarea { resize: vertical; }
-    textarea:focus, .text-input:focus { border-color: var(--accent); }
-    textarea::placeholder, .text-input::placeholder { color: var(--muted); }
+            /* Textarea & input */
+            textarea,
+            .text-input {
+                width: 100%;
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                color: var(--text);
+                font-size: 13px;
+                padding: 10px 12px;
+                outline: none;
+                line-height: 1.6;
+                font-family: inherit;
+            }
+            textarea {
+                resize: vertical;
+            }
+            textarea:focus,
+            .text-input:focus {
+                border-color: var(--accent);
+            }
+            textarea::placeholder,
+            .text-input::placeholder {
+                color: var(--muted);
+            }
 
-    /* Generate button */
-    .btn-generate { width: 100%; padding: 13px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 9px; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity .15s; }
-    .btn-generate:hover:not(:disabled) { opacity: .88; }
-    .btn-generate:disabled { opacity: .4; cursor: not-allowed; }
-    .spinner { display: none; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; }
-    .loading .spinner { display: block; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+            /* Generate button */
+            .btn-generate {
+                width: 100%;
+                padding: 13px;
+                background: linear-gradient(
+                    135deg,
+                    var(--accent),
+                    var(--accent2)
+                );
+                border: none;
+                border-radius: 9px;
+                color: #fff;
+                font-size: 14px;
+                font-weight: 700;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                transition: opacity 0.15s;
+            }
+            .btn-generate:hover:not(:disabled) {
+                opacity: 0.88;
+            }
+            .btn-generate:disabled {
+                opacity: 0.4;
+                cursor: not-allowed;
+            }
+            .spinner {
+                display: none;
+                width: 16px;
+                height: 16px;
+                border: 2px solid rgba(255, 255, 255, 0.3);
+                border-top-color: #fff;
+                border-radius: 50%;
+                animation: spin 0.6s linear infinite;
+            }
+            .loading .spinner {
+                display: block;
+            }
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
 
-    /* ── Right Panel ────────────────────────────────────────────────────── */
-    .right { display: flex; flex-direction: column; overflow: hidden; }
+            /* ── Right Panel ────────────────────────────────────────────────────── */
+            .right {
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
 
-    /* Result toolbar */
-    .result-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 18px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-    .tabs { display: flex; gap: 4px; }
-    .tab { padding: 5px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; color: var(--muted); transition: all .15s; }
-    .tab.active { background: var(--accent); color: #fff; }
-    .tab:hover:not(.active) { color: var(--text); }
-    .result-actions { margin-left: auto; display: flex; gap: 7px; }
-    .btn-sm { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 7px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all .15s; white-space: nowrap; }
-    .btn-sm:hover:not(:disabled) { border-color: var(--accent); color: var(--accent2); }
-    .btn-sm:disabled { opacity: .35; cursor: not-allowed; }
+            /* Result toolbar */
+            .result-bar {
+                background: var(--surface);
+                border-bottom: 1px solid var(--border);
+                padding: 12px 18px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                flex-shrink: 0;
+            }
+            .tabs {
+                display: flex;
+                gap: 4px;
+            }
+            .tab {
+                padding: 5px 14px;
+                border-radius: 20px;
+                font-size: 13px;
+                cursor: pointer;
+                color: var(--muted);
+                transition: all 0.15s;
+            }
+            .tab.active {
+                background: var(--accent);
+                color: #fff;
+            }
+            .tab:hover:not(.active) {
+                color: var(--text);
+            }
+            .result-actions {
+                margin-left: auto;
+                display: flex;
+                gap: 7px;
+            }
+            .btn-sm {
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                color: var(--text);
+                padding: 6px 12px;
+                border-radius: 7px;
+                font-size: 12px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                transition: all 0.15s;
+                white-space: nowrap;
+            }
+            .btn-sm:hover:not(:disabled) {
+                border-color: var(--accent);
+                color: var(--accent2);
+            }
+            .btn-sm:disabled {
+                opacity: 0.35;
+                cursor: not-allowed;
+            }
 
-    /* Score badge */
-    .score-badge { display: none; align-items: center; gap: 6px; background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 12px; }
-    .score-badge.visible { display: flex; }
-    .score-num { font-weight: 800; font-size: 14px; }
-    .score-num.pass { color: var(--success); }
-    .score-num.warn { color: var(--warning); }
-    .score-num.fail { color: var(--danger); }
+            /* Score badge */
+            .score-badge {
+                display: none;
+                align-items: center;
+                gap: 6px;
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                border-radius: 20px;
+                padding: 4px 12px;
+                font-size: 12px;
+            }
+            .score-badge.visible {
+                display: flex;
+            }
+            .score-num {
+                font-weight: 800;
+                font-size: 14px;
+            }
+            .score-num.pass {
+                color: var(--success);
+            }
+            .score-num.warn {
+                color: var(--warning);
+            }
+            .score-num.fail {
+                color: var(--danger);
+            }
 
-    /* Progress panel */
-    .progress-panel { display: none; background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 18px; flex-shrink: 0; }
-    .progress-panel.visible { display: block; }
-    .progress-title { font-size: 12px; color: var(--muted); margin-bottom: 8px; font-weight: 600; }
-    .progress-log { max-height: 90px; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; }
-    .progress-entry { font-size: 12px; color: var(--text); display: flex; align-items: center; gap: 8px; }
-    .progress-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
-    .progress-dot.done { background: var(--success); }
-    .round-pill { background: rgba(99,102,241,.2); color: var(--accent2); font-size: 10px; padding: 1px 7px; border-radius: 10px; font-weight: 700; }
+            /* Progress panel */
+            .progress-panel {
+                display: none;
+                background: var(--surface);
+                border-bottom: 1px solid var(--border);
+                padding: 12px 18px;
+                flex-shrink: 0;
+            }
+            .progress-panel.visible {
+                display: block;
+            }
+            .progress-title {
+                font-size: 12px;
+                color: var(--muted);
+                margin-bottom: 8px;
+                font-weight: 600;
+            }
+            .progress-log {
+                max-height: 90px;
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+                gap: 3px;
+            }
+            .progress-entry {
+                font-size: 12px;
+                color: var(--text);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .progress-dot {
+                width: 7px;
+                height: 7px;
+                border-radius: 50%;
+                background: var(--accent);
+                flex-shrink: 0;
+            }
+            .progress-dot.done {
+                background: var(--success);
+            }
+            .round-pill {
+                background: rgba(99, 102, 241, 0.2);
+                color: var(--accent2);
+                font-size: 10px;
+                padding: 1px 7px;
+                border-radius: 10px;
+                font-weight: 700;
+            }
 
-    /* Content */
-    .result-body { flex: 1; overflow-y: auto; padding: 24px; }
+            /* Content */
+            .result-body {
+                flex: 1;
+                overflow-y: auto;
+                padding: 24px;
+            }
 
-    /* Empty state */
-    .empty { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; }
-    .empty-icon { font-size: 56px; opacity: .25; }
-    .empty-title { font-size: 20px; font-weight: 700; opacity: .3; }
-    .empty-sub { font-size: 13px; opacity: .25; }
+            /* Empty state */
+            .empty {
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+                text-align: center;
+            }
+            .empty-icon {
+                font-size: 56px;
+                opacity: 0.25;
+            }
+            .empty-title {
+                font-size: 20px;
+                font-weight: 700;
+                opacity: 0.3;
+            }
+            .empty-sub {
+                font-size: 13px;
+                opacity: 0.25;
+            }
 
-    /* Markdown */
-    .md-view { max-width: 860px; margin: 0 auto; }
-    .md-view h1 { font-size: 20px; margin-bottom: 14px; }
-    .md-view h2 { font-size: 16px; margin: 22px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
-    .md-view h3 { font-size: 14px; margin: 16px 0 7px; color: var(--accent2); }
-    .md-view h4 { font-size: 13px; margin: 12px 0 6px; }
-    .md-view p { font-size: 13px; line-height: 1.7; margin-bottom: 8px; }
-    .md-view ul, .md-view ol { padding-left: 18px; margin-bottom: 8px; }
-    .md-view li { font-size: 13px; line-height: 1.8; }
-    .md-view blockquote { border-left: 3px solid var(--accent); padding-left: 12px; color: var(--muted); font-style: italic; margin: 10px 0; }
-    .md-view table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
-    .md-view th, .md-view td { border: 1px solid var(--border); padding: 7px 10px; text-align: left; }
-    .md-view th { background: var(--surface2); font-weight: 600; color: var(--accent2); }
-    .md-view code { background: var(--surface2); padding: 1px 6px; border-radius: 4px; font-size: 11px; }
-    .md-view strong { color: var(--accent2); }
-    .md-view hr { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+            /* Markdown */
+            .md-view {
+                max-width: 860px;
+                margin: 0 auto;
+            }
+            .md-view h1 {
+                font-size: 20px;
+                margin-bottom: 14px;
+            }
+            .md-view h2 {
+                font-size: 16px;
+                margin: 22px 0 10px;
+                padding-bottom: 6px;
+                border-bottom: 1px solid var(--border);
+            }
+            .md-view h3 {
+                font-size: 14px;
+                margin: 16px 0 7px;
+                color: var(--accent2);
+            }
+            .md-view h4 {
+                font-size: 13px;
+                margin: 12px 0 6px;
+            }
+            .md-view p {
+                font-size: 13px;
+                line-height: 1.7;
+                margin-bottom: 8px;
+            }
+            .md-view ul,
+            .md-view ol {
+                padding-left: 18px;
+                margin-bottom: 8px;
+            }
+            .md-view li {
+                font-size: 13px;
+                line-height: 1.8;
+            }
+            .md-view blockquote {
+                border-left: 3px solid var(--accent);
+                padding-left: 12px;
+                color: var(--muted);
+                font-style: italic;
+                margin: 10px 0;
+            }
+            .md-view table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 10px 0;
+                font-size: 12px;
+            }
+            .md-view th,
+            .md-view td {
+                border: 1px solid var(--border);
+                padding: 7px 10px;
+                text-align: left;
+            }
+            .md-view th {
+                background: var(--surface2);
+                font-weight: 600;
+                color: var(--accent2);
+            }
+            .md-view code {
+                background: var(--surface2);
+                padding: 1px 6px;
+                border-radius: 4px;
+                font-size: 11px;
+            }
+            .md-view strong {
+                color: var(--accent2);
+            }
+            .md-view hr {
+                border: none;
+                border-top: 1px solid var(--border);
+                margin: 18px 0;
+            }
 
-    /* Stats */
-    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; max-width: 780px; margin: 0 auto 24px; }
-    .stat-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 18px; text-align: center; }
-    .stat-num { font-size: 32px; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .stat-lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
+            /* Stats */
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 14px;
+                max-width: 780px;
+                margin: 0 auto 24px;
+            }
+            .stat-card {
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                border-radius: 10px;
+                padding: 18px;
+                text-align: center;
+            }
+            .stat-num {
+                font-size: 32px;
+                font-weight: 800;
+                background: linear-gradient(
+                    135deg,
+                    var(--accent),
+                    var(--accent2)
+                );
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+            }
+            .stat-lbl {
+                font-size: 12px;
+                color: var(--muted);
+                margin-top: 4px;
+            }
 
-    /* Score breakdown */
-    .score-breakdown { max-width: 780px; margin: 0 auto 24px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
-    .sb-title { font-size: 13px; font-weight: 700; margin-bottom: 14px; color: var(--accent2); }
-    .sb-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-    .sb-label { width: 100px; font-size: 12px; color: var(--muted); }
-    .sb-track { flex: 1; background: var(--surface3); border-radius: 20px; height: 8px; overflow: hidden; }
-    .sb-fill { height: 100%; border-radius: 20px; transition: width .6s; }
-    .sb-max { width: 28px; font-size: 11px; text-align: right; color: var(--muted); }
+            /* Score breakdown */
+            .score-breakdown {
+                max-width: 780px;
+                margin: 0 auto 24px;
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                border-radius: 10px;
+                padding: 18px;
+            }
+            .sb-title {
+                font-size: 13px;
+                font-weight: 700;
+                margin-bottom: 14px;
+                color: var(--accent2);
+            }
+            .sb-row {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 10px;
+            }
+            .sb-label {
+                width: 100px;
+                font-size: 12px;
+                color: var(--muted);
+            }
+            .sb-track {
+                flex: 1;
+                background: var(--surface3);
+                border-radius: 20px;
+                height: 8px;
+                overflow: hidden;
+            }
+            .sb-fill {
+                height: 100%;
+                border-radius: 20px;
+                transition: width 0.6s;
+            }
+            .sb-max {
+                width: 28px;
+                font-size: 11px;
+                text-align: right;
+                color: var(--muted);
+            }
 
-    /* Review rounds */
-    .review-rounds { max-width: 780px; margin: 0 auto; }
-    .round-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 12px; }
-    .round-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-    .round-num { background: var(--accent); color: #fff; font-size: 11px; padding: 2px 9px; border-radius: 12px; font-weight: 700; }
-    .round-score { font-size: 18px; font-weight: 800; }
-    .round-score.pass { color: var(--success); }
-    .round-score.fail { color: var(--warning); }
-    .round-providers { margin-left: auto; display: flex; gap: 5px; }
-    .prov-tag { font-size: 10px; background: var(--surface3); padding: 2px 7px; border-radius: 8px; }
-    .issues-list { display: flex; flex-direction: column; gap: 5px; }
-    .issue-item { font-size: 12px; color: var(--muted); padding-left: 14px; position: relative; }
-    .issue-item::before { content: "•"; position: absolute; left: 0; color: var(--warning); }
+            /* Review rounds */
+            .review-rounds {
+                max-width: 780px;
+                margin: 0 auto;
+            }
+            .round-card {
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                border-radius: 10px;
+                padding: 16px;
+                margin-bottom: 12px;
+            }
+            .round-header {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 10px;
+            }
+            .round-num {
+                background: var(--accent);
+                color: #fff;
+                font-size: 11px;
+                padding: 2px 9px;
+                border-radius: 12px;
+                font-weight: 700;
+            }
+            .round-score {
+                font-size: 18px;
+                font-weight: 800;
+            }
+            .round-score.pass {
+                color: var(--success);
+            }
+            .round-score.fail {
+                color: var(--warning);
+            }
+            .round-providers {
+                margin-left: auto;
+                display: flex;
+                gap: 5px;
+            }
+            .prov-tag {
+                font-size: 10px;
+                background: var(--surface3);
+                padding: 2px 7px;
+                border-radius: 8px;
+            }
+            .issues-list {
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+            }
+            .issue-item {
+                font-size: 12px;
+                color: var(--muted);
+                padding-left: 14px;
+                position: relative;
+            }
+            .issue-item::before {
+                content: "•";
+                position: absolute;
+                left: 0;
+                color: var(--warning);
+            }
 
-    /* Refine bar */
-    .refine-bar { background: var(--surface); border-top: 1px solid var(--border); padding: 12px 18px; display: none; gap: 8px; flex-shrink: 0; }
-    .refine-bar.visible { display: flex; }
-    .refine-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 9px 13px; font-size: 13px; outline: none; }
-    .refine-input:focus { border-color: var(--accent); }
-    .refine-input::placeholder { color: var(--muted); }
-    .btn-refine { background: rgba(99,102,241,.15); border: 1px solid var(--accent); color: var(--accent2); padding: 9px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; white-space: nowrap; transition: all .15s; }
-    .btn-refine:hover { background: rgba(99,102,241,.25); }
+            /* Refine bar */
+            .refine-bar {
+                background: var(--surface);
+                border-top: 1px solid var(--border);
+                padding: 12px 18px;
+                display: none;
+                gap: 8px;
+                flex-shrink: 0;
+            }
+            .refine-bar.visible {
+                display: flex;
+            }
+            .refine-input {
+                flex: 1;
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                color: var(--text);
+                border-radius: 8px;
+                padding: 9px 13px;
+                font-size: 13px;
+                outline: none;
+            }
+            .refine-input:focus {
+                border-color: var(--accent);
+            }
+            .refine-input::placeholder {
+                color: var(--muted);
+            }
+            .btn-refine {
+                background: rgba(99, 102, 241, 0.15);
+                border: 1px solid var(--accent);
+                color: var(--accent2);
+                padding: 9px 16px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 13px;
+                font-weight: 600;
+                white-space: nowrap;
+                transition: all 0.15s;
+            }
+            .btn-refine:hover {
+                background: rgba(99, 102, 241, 0.25);
+            }
 
-    /* Toast */
-    .toasts { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 9999; }
-    .toast { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 13px; box-shadow: var(--shadow); animation: slideIn .2s ease; max-width: 340px; }
-    .toast.success { border-color: var(--success); color: var(--success); }
-    .toast.error { border-color: var(--danger); color: var(--danger); }
-    @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+            /* Toast */
+            .toasts {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                z-index: 9999;
+            }
+            .toast {
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 10px 14px;
+                font-size: 13px;
+                box-shadow: var(--shadow);
+                animation: slideIn 0.2s ease;
+                max-width: 340px;
+            }
+            .toast.success {
+                border-color: var(--success);
+                color: var(--success);
+            }
+            .toast.error {
+                border-color: var(--danger);
+                color: var(--danger);
+            }
+            @keyframes slideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
 
-    ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+            ::-webkit-scrollbar {
+                width: 5px;
+            }
+            ::-webkit-scrollbar-thumb {
+                background: var(--border);
+                border-radius: 3px;
+            }
 
-    @media (max-width: 860px) {
-      main { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
-      .left { max-height: 55vh; border-right: none; border-bottom: 1px solid var(--border); }
-      .stats-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-  </style>
-</head>
-<body>
-<div class="app" id="app">
+            @media (max-width: 860px) {
+                main {
+                    grid-template-columns: 1fr;
+                    grid-template-rows: auto 1fr;
+                }
+                .left {
+                    max-height: 55vh;
+                    border-right: none;
+                    border-bottom: 1px solid var(--border);
+                }
+                .stats-grid {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="app" id="app">
+            <header>
+                <span class="h-title" id="pageTitle"
+                    >AI Test Case Generator</span
+                >
+                <span class="h-version">v1.0.0</span>
+                <div class="h-right">
+                    <div class="lang-toggle">
+                        <button
+                            class="lang-btn active"
+                            data-lang="en"
+                            onclick="setLang('en', this)"
+                        >
+                            EN
+                        </button>
+                        <button
+                            class="lang-btn"
+                            data-lang="zh"
+                            onclick="setLang('zh', this)"
+                        >
+                            中文
+                        </button>
+                    </div>
+                </div>
+            </header>
 
-  <header>
-    <span class="logo">🦞</span>
-    <span class="h-title" id="pageTitle">AI Test Case Generator</span>
-    <span class="h-version">v2.0</span>
-    <div class="h-right">
-      <div class="lang-toggle">
-        <button class="lang-btn active" data-lang="en" onclick="setLang('en',this)">EN</button>
-        <button class="lang-btn" data-lang="zh" onclick="setLang('zh',this)">中文</button>
-      </div>
-    </div>
-  </header>
+            <main>
+                <!-- ── Left ── -->
+                <div class="left">
+                    <!-- Stage -->
+                    <div class="panel">
+                        <div class="panel-label" id="lbl-stage">
+                            Testing Stage
+                        </div>
+                        <div class="stage-grid" id="stageGrid">
+                            <!-- filled by JS -->
+                        </div>
+                    </div>
 
-  <main>
-    <!-- ── Left ── -->
-    <div class="left">
+                    <!-- Generator -->
+                    <div class="panel">
+                        <div class="panel-label" id="lbl-generator">
+                            Generator Model
+                        </div>
+                        <div class="provider-row" id="generatorGrid">
+                            <button
+                                class="provider-btn active"
+                                data-p="claude"
+                                onclick="selectGen(this)"
+                            >
+                                Claude
+                            </button>
+                            <button
+                                class="provider-btn"
+                                data-p="openai"
+                                onclick="selectGen(this)"
+                            >
+                                OpenAI
+                            </button>
+                            <button
+                                class="provider-btn"
+                                data-p="deepseek"
+                                onclick="selectGen(this)"
+                            >
+                                DeepSeek
+                            </button>
+                            <button
+                                class="provider-btn"
+                                data-p="minimax"
+                                onclick="selectGen(this)"
+                            >
+                                MiniMax
+                            </button>
+                            <button
+                                class="provider-btn"
+                                data-p="qwen"
+                                onclick="selectGen(this)"
+                            >
+                                Qwen
+                            </button>
+                            <button
+                                class="provider-btn"
+                                data-p="gemini"
+                                onclick="selectGen(this)"
+                            >
+                                Gemini
+                            </button>
+                        </div>
+                    </div>
 
-      <!-- Stage -->
-      <div class="panel">
-        <div class="panel-label" id="lbl-stage">Testing Stage</div>
-        <div class="stage-grid" id="stageGrid">
-          <!-- filled by JS -->
+                    <!-- Reviewers -->
+                    <div class="panel">
+                        <div class="panel-label">
+                            <span id="lbl-reviewer">Reviewer Models</span>
+                            <span class="badge-hot">🔥 Multi-model Review</span>
+                        </div>
+                        <div class="provider-row" id="reviewerGrid">
+                            <button
+                                class="provider-btn reviewer-active"
+                                data-p="claude"
+                                onclick="toggleReviewer(this)"
+                            >
+                                Claude
+                            </button>
+                            <button
+                                class="provider-btn reviewer-active"
+                                data-p="openai"
+                                onclick="toggleReviewer(this)"
+                            >
+                                OpenAI
+                            </button>
+                            <button
+                                class="provider-btn reviewer-active"
+                                data-p="deepseek"
+                                onclick="toggleReviewer(this)"
+                            >
+                                DeepSeek
+                            </button>
+                            <button
+                                class="provider-btn"
+                                data-p="minimax"
+                                onclick="toggleReviewer(this)"
+                            >
+                                MiniMax
+                            </button>
+                            <button
+                                class="provider-btn"
+                                data-p="qwen"
+                                onclick="toggleReviewer(this)"
+                            >
+                                Qwen
+                            </button>
+                            <button
+                                class="provider-btn"
+                                data-p="gemini"
+                                onclick="toggleReviewer(this)"
+                            >
+                                Gemini
+                            </button>
+                        </div>
+                        <div class="review-toggle" style="margin-top: 12px">
+                            <div
+                                class="toggle-track on"
+                                id="reviewToggle"
+                                onclick="toggleReview()"
+                            >
+                                <div class="toggle-thumb"></div>
+                            </div>
+                            <div>
+                                <div class="toggle-label" id="lbl-review-on">
+                                    Review loop enabled
+                                </div>
+                                <div class="toggle-sub" id="lbl-review-sub">
+                                    Score threshold: 90 · Max 5 rounds
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Upload -->
+                    <div class="panel">
+                        <div class="panel-label" id="lbl-upload">
+                            Upload Requirements
+                        </div>
+                        <div class="drop-zone" id="dropZone">
+                            <input
+                                type="file"
+                                id="fileInput"
+                                multiple
+                                accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.webp,.mp4,.mov,.avi,.mkv"
+                                onchange="handleFiles(this.files)"
+                            />
+                            <div class="drop-icon">📁</div>
+                            <div class="drop-label">
+                                <span id="lbl-click">Click to upload</span>
+                                <span id="lbl-or"> or drag & drop</span>
+                            </div>
+                            <div class="drop-hint" id="lbl-formats">
+                                PDF · Word · TXT · Images · Video (MP4/MOV)
+                            </div>
+                        </div>
+                        <div class="file-list" id="fileList"></div>
+                    </div>
+
+                    <!-- Text -->
+                    <div class="panel">
+                        <div class="panel-label" id="lbl-text">
+                            Requirement Text
+                        </div>
+                        <textarea
+                            id="reqText"
+                            rows="7"
+                            placeholder="Paste requirement description here…"
+                        ></textarea>
+                    </div>
+
+                    <!-- Prompt -->
+                    <div class="panel">
+                        <div class="panel-label" id="lbl-prompt">
+                            Custom Prompt (optional)
+                        </div>
+                        <input
+                            class="text-input"
+                            id="promptInput"
+                            type="text"
+                            placeholder="e.g. Focus on boundary values and security scenarios"
+                        />
+                    </div>
+
+                    <!-- Generate -->
+                    <div class="panel">
+                        <button
+                            class="btn-generate"
+                            id="genBtn"
+                            onclick="generate()"
+                        >
+                            <div class="spinner"></div>
+                            <span id="btn-text">✨ Generate Test Cases</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ── Right ── -->
+                <div class="right">
+                    <!-- Toolbar -->
+                    <div class="result-bar">
+                        <div class="tabs">
+                            <div
+                                class="tab active"
+                                onclick="switchTab('markdown', this)"
+                                id="tab-md"
+                            >
+                                📄 Test Cases
+                            </div>
+                            <div
+                                class="tab"
+                                onclick="switchTab('stats', this)"
+                                id="tab-stats"
+                            >
+                                📊 Stats
+                            </div>
+                            <div
+                                class="tab"
+                                onclick="switchTab('review', this)"
+                                id="tab-review"
+                            >
+                                🔍 Review
+                            </div>
+                        </div>
+                        <div class="score-badge" id="scoreBadge">
+                            <span>Score</span>
+                            <span class="score-num" id="scoreNum">—</span>
+                            <span style="font-size: 11px; color: var(--muted)"
+                                >/100</span
+                            >
+                        </div>
+                        <div class="result-actions">
+                            <button
+                                class="btn-sm"
+                                id="dlExcel"
+                                onclick="dl('excel')"
+                                disabled
+                            >
+                                ⬇ Excel
+                            </button>
+                            <button
+                                class="btn-sm"
+                                id="dlMd"
+                                onclick="dl('markdown')"
+                                disabled
+                            >
+                                ⬇ Markdown
+                            </button>
+                            <button
+                                class="btn-sm"
+                                id="dlXmind"
+                                onclick="dl('xmind')"
+                                disabled
+                            >
+                                ⬇ XMind
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Progress log -->
+                    <div class="progress-panel" id="progressPanel">
+                        <div class="progress-title" id="lbl-progress">
+                            Generation Progress
+                        </div>
+                        <div class="progress-log" id="progressLog"></div>
+                    </div>
+
+                    <!-- Body -->
+                    <div class="result-body" id="resultBody">
+                        <div class="empty">
+                            <div class="empty-icon">🧪</div>
+                            <div class="empty-title" id="empty-title">
+                                Awaiting generation
+                            </div>
+                            <div class="empty-sub" id="empty-sub">
+                                Upload requirements or enter text, then click
+                                Generate
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Refine bar -->
+                    <div class="refine-bar" id="refineBar">
+                        <input
+                            class="refine-input"
+                            id="refineInput"
+                            type="text"
+                            placeholder="Describe modifications, e.g. Add performance tests for login module…"
+                            id="refine-placeholder"
+                        />
+                        <button
+                            class="btn-refine"
+                            onclick="refine()"
+                            id="btn-refine"
+                        >
+                            🔄 Re-optimize
+                        </button>
+                    </div>
+                </div>
+            </main>
         </div>
-      </div>
+        <div class="toasts" id="toasts"></div>
 
-      <!-- Generator -->
-      <div class="panel">
-        <div class="panel-label" id="lbl-generator">Generator Model</div>
-        <div class="provider-row" id="generatorGrid">
-          <button class="provider-btn active" data-p="claude" onclick="selectGen(this)">Claude</button>
-          <button class="provider-btn" data-p="openai" onclick="selectGen(this)">OpenAI</button>
-          <button class="provider-btn" data-p="deepseek" onclick="selectGen(this)">DeepSeek</button>
-          <button class="provider-btn" data-p="minimax" onclick="selectGen(this)">MiniMax</button>
-          <button class="provider-btn" data-p="qwen" onclick="selectGen(this)">Qwen</button>
-          <button class="provider-btn" data-p="gemini" onclick="selectGen(this)">Gemini</button>
-        </div>
-      </div>
+        <script>
+            // ── State ─────────────────────────────────────────────────────────────────────
+            const S = {
+                lang: "en",
+                stage: "development",
+                generator: "claude",
+                reviewers: new Set(["claude", "openai", "deepseek"]),
+                reviewEnabled: true,
+                files: [],
+                sessionId: null,
+                result: null,
+                activeTab: "markdown",
+                loading: false,
+                stages: [],
+            };
 
-      <!-- Reviewers -->
-      <div class="panel">
-        <div class="panel-label">
-          <span id="lbl-reviewer">Reviewer Models</span>
-          <span class="badge-hot">🔥 Multi-model Review</span>
-        </div>
-        <div class="provider-row" id="reviewerGrid">
-          <button class="provider-btn reviewer-active" data-p="claude" onclick="toggleReviewer(this)">Claude</button>
-          <button class="provider-btn reviewer-active" data-p="openai" onclick="toggleReviewer(this)">OpenAI</button>
-          <button class="provider-btn reviewer-active" data-p="deepseek" onclick="toggleReviewer(this)">DeepSeek</button>
-          <button class="provider-btn" data-p="minimax" onclick="toggleReviewer(this)">MiniMax</button>
-          <button class="provider-btn" data-p="qwen" onclick="toggleReviewer(this)">Qwen</button>
-          <button class="provider-btn" data-p="gemini" onclick="toggleReviewer(this)">Gemini</button>
-        </div>
-        <div class="review-toggle" style="margin-top:12px">
-          <div class="toggle-track on" id="reviewToggle" onclick="toggleReview()">
-            <div class="toggle-thumb"></div>
-          </div>
-          <div>
-            <div class="toggle-label" id="lbl-review-on">Review loop enabled</div>
-            <div class="toggle-sub" id="lbl-review-sub">Score threshold: 90 · Max 5 rounds</div>
-          </div>
-        </div>
-      </div>
+            // ── i18n strings ──────────────────────────────────────────────────────────────
+            const I18N = {
+                en: {
+                    pageTitle: "AI Test Case Generator",
+                    "lbl-stage": "Testing Stage",
+                    "lbl-generator": "Generator Model",
+                    "lbl-reviewer": "Reviewer Models",
+                    "lbl-review-on": "Review loop enabled",
+                    "lbl-review-off": "Review loop disabled",
+                    "lbl-review-sub": "Score threshold: 90 · Max 5 rounds",
+                    "lbl-upload": "Upload Requirements",
+                    "lbl-click": "Click to upload",
+                    "lbl-or": " or drag & drop",
+                    "lbl-formats":
+                        "PDF · Word · TXT · Images · Video (MP4/MOV)",
+                    "lbl-text": "Requirement Text",
+                    "lbl-prompt": "Custom Prompt (optional)",
+                    "btn-text": "✨ Generate Test Cases",
+                    "lbl-progress": "Generation Progress",
+                    "tab-md": "📄 Test Cases",
+                    "tab-stats": "📊 Stats",
+                    "tab-review": "🔍 Review",
+                    "empty-title": "Awaiting generation",
+                    "empty-sub":
+                        "Upload requirements or enter text, then click Generate",
+                    "btn-refine": "🔄 Re-optimize",
+                    textPlaceholder:
+                        "Paste requirement description here…\n\nExample:\nUser login module\n- Phone number + password login\n- OAuth (GitHub / Google)\n- Lock account for 30 min after 5 failed attempts",
+                    promptPlaceholder:
+                        "e.g. Focus on boundary values and security scenarios",
+                    refinePlaceholder:
+                        "Describe modifications, e.g. Add performance tests, refine login steps…",
+                    dlXmind: "🗺 XMind",
+                },
+                zh: {
+                    pageTitle: "AI 测试用例生成器",
+                    "lbl-stage": "测试阶段",
+                    "lbl-generator": "生成模型",
+                    "lbl-reviewer": "评审模型",
+                    "lbl-review-on": "评审闭环已开启",
+                    "lbl-review-off": "评审闭环已关闭",
+                    "lbl-review-sub": "评分阈值：90分 · 最多5轮",
+                    "lbl-upload": "上传需求文件（可选）",
+                    "lbl-click": "点击上传",
+                    "lbl-or": " 或拖拽到此处",
+                    "lbl-formats": "PDF · Word · TXT · 图片 · 视频（MP4/MOV）",
+                    "lbl-text": "需求文本",
+                    "lbl-prompt": "补充提示词（可选）",
+                    "btn-text": "✨ 生成测试用例",
+                    "lbl-progress": "生成进度",
+                    "tab-md": "📄 测试用例",
+                    "tab-stats": "📊 统计",
+                    "tab-review": "🔍 评审",
+                    "empty-title": "等待生成",
+                    "empty-sub":
+                        "上传需求文件或输入需求文本，点击「生成测试用例」",
+                    "btn-refine": "🔄 优化重生成",
+                    textPlaceholder:
+                        "粘贴需求描述到这里…\n\n例如：\n用户登录模块\n- 支持手机号+密码登录\n- 支持微信/GitHub OAuth\n- 错误5次锁定30分钟",
+                    promptPlaceholder: "例如：重点覆盖边界值和安全异常场景",
+                    refinePlaceholder:
+                        "描述修改要求，例如：增加性能测试，细化登录步骤…",
+                    dlXmind: "🗺 XMind",
+                },
+            };
 
-      <!-- Upload -->
-      <div class="panel">
-        <div class="panel-label" id="lbl-upload">Upload Requirements</div>
-        <div class="drop-zone" id="dropZone">
-          <input type="file" id="fileInput" multiple
-            accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.webp,.mp4,.mov,.avi,.mkv"
-            onchange="handleFiles(this.files)" />
-          <div class="drop-icon">📁</div>
-          <div class="drop-label"><span id="lbl-click">Click to upload</span> <span id="lbl-or"> or drag & drop</span></div>
-          <div class="drop-hint" id="lbl-formats">PDF · Word · TXT · Images · Video (MP4/MOV)</div>
-        </div>
-        <div class="file-list" id="fileList"></div>
-      </div>
+            function t(key) {
+                return I18N[S.lang][key] || key;
+            }
 
-      <!-- Text -->
-      <div class="panel">
-        <div class="panel-label" id="lbl-text">Requirement Text</div>
-        <textarea id="reqText" rows="7" placeholder="Paste requirement description here…"></textarea>
-      </div>
+            function applyI18n() {
+                document.getElementById("pageTitle").textContent =
+                    t("pageTitle");
+                document.title = t("pageTitle");
+                const ids = [
+                    "lbl-stage",
+                    "lbl-generator",
+                    "lbl-reviewer",
+                    "lbl-review-sub",
+                    "lbl-upload",
+                    "lbl-text",
+                    "lbl-prompt",
+                    "btn-text",
+                    "lbl-progress",
+                    "tab-md",
+                    "tab-stats",
+                    "tab-review",
+                    "empty-title",
+                    "empty-sub",
+                    "btn-refine",
+                ];
+                ids.forEach((id) => {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = t(id);
+                });
+                document.getElementById("lbl-click").textContent =
+                    t("lbl-click");
+                document.getElementById("lbl-or").textContent = t("lbl-or");
+                document.getElementById("lbl-formats").textContent =
+                    t("lbl-formats");
+                document.getElementById("reqText").placeholder =
+                    t("textPlaceholder");
+                document.getElementById("promptInput").placeholder =
+                    t("promptPlaceholder");
+                document.getElementById("refineInput").placeholder =
+                    t("refinePlaceholder");
+                document.getElementById("lbl-review-on").textContent =
+                    S.reviewEnabled ? t("lbl-review-on") : t("lbl-review-off");
+                renderStageGrid();
+                if (S.result) renderResult();
+            }
 
-      <!-- Prompt -->
-      <div class="panel">
-        <div class="panel-label" id="lbl-prompt">Custom Prompt (optional)</div>
-        <input class="text-input" id="promptInput" type="text" placeholder="e.g. Focus on boundary values and security scenarios" />
-      </div>
+            // ── Lang ──────────────────────────────────────────────────────────────────────
+            async function setLang(lang, btn) {
+                if (S.lang === lang) return;
+                S.lang = lang;
+                document
+                    .querySelectorAll(".lang-btn")
+                    .forEach((b) => b.classList.remove("active"));
+                btn.classList.add("active");
+                await loadStages();
+                applyI18n();
+            }
 
-      <!-- Generate -->
-      <div class="panel">
-        <button class="btn-generate" id="genBtn" onclick="generate()">
-          <div class="spinner"></div>
-          <span id="btn-text">✨ Generate Test Cases</span>
-        </button>
-      </div>
-    </div>
+            // ── Stages ────────────────────────────────────────────────────────────────────
+            function getFallbackStages(lang) {
+                return lang === "zh"
+                    ? [
+                          {
+                              id: "requirement",
+                              name: "需求评审",
+                              description: "完整性、清晰度、边界条件",
+                          },
+                          {
+                              id: "development",
+                              name: "开发提测",
+                              description: "功能、界面、安全、兼容性",
+                          },
+                          {
+                              id: "prerelease",
+                              name: "上线前验证",
+                              description: "回归、冒烟、性能、部署验证",
+                          },
+                      ]
+                    : [
+                          {
+                              id: "requirement",
+                              name: "Requirement Review",
+                              description: "Completeness, clarity, boundaries",
+                          },
+                          {
+                              id: "development",
+                              name: "Development Handoff",
+                              description:
+                                  "Functional, UI, security, compatibility",
+                          },
+                          {
+                              id: "prerelease",
+                              name: "Pre-Release",
+                              description:
+                                  "Regression, smoke, performance, deploy",
+                          },
+                      ];
+            }
 
-    <!-- ── Right ── -->
-    <div class="right">
-      <!-- Toolbar -->
-      <div class="result-bar">
-        <div class="tabs">
-          <div class="tab active" onclick="switchTab('markdown',this)" id="tab-md">📄 Test Cases</div>
-          <div class="tab" onclick="switchTab('stats',this)" id="tab-stats">📊 Stats</div>
-          <div class="tab" onclick="switchTab('review',this)" id="tab-review">🔍 Review</div>
-        </div>
-        <div class="score-badge" id="scoreBadge">
-          <span>Score</span>
-          <span class="score-num" id="scoreNum">—</span>
-          <span style="font-size:11px;color:var(--muted)">/100</span>
-        </div>
-        <div class="result-actions">
-          <button class="btn-sm" id="dlExcel" onclick="dl('excel')" disabled>⬇ Excel</button>
-          <button class="btn-sm" id="dlMd" onclick="dl('markdown')" disabled>⬇ Markdown</button>
-          <button class="btn-sm" id="dlXmind" onclick="dl('xmind')" disabled>🗺 XMind</button>
-        </div>
-      </div>
+            async function loadStages() {
+                try {
+                    const r = await fetch(`/api/stages?lang=${S.lang}`);
+                    const j = await r.json();
+                    S.stages = j.success ? j.data : getFallbackStages(S.lang);
+                } catch {
+                    S.stages = getFallbackStages(S.lang);
+                }
+                renderStageGrid();
+            }
 
-      <!-- Progress log -->
-      <div class="progress-panel" id="progressPanel">
-        <div class="progress-title" id="lbl-progress">Generation Progress</div>
-        <div class="progress-log" id="progressLog"></div>
-      </div>
-
-      <!-- Body -->
-      <div class="result-body" id="resultBody">
-        <div class="empty">
-          <div class="empty-icon">🧪</div>
-          <div class="empty-title" id="empty-title">Awaiting generation</div>
-          <div class="empty-sub" id="empty-sub">Upload requirements or enter text, then click Generate</div>
-        </div>
-      </div>
-
-      <!-- Refine bar -->
-      <div class="refine-bar" id="refineBar">
-        <input class="refine-input" id="refineInput" type="text"
-          placeholder="Describe modifications, e.g. Add performance tests for login module…" id="refine-placeholder" />
-        <button class="btn-refine" onclick="refine()" id="btn-refine">🔄 Re-optimize</button>
-      </div>
-    </div>
-  </main>
-</div>
-<div class="toasts" id="toasts"></div>
-
-<script>
-// ── State ─────────────────────────────────────────────────────────────────────
-const S = {
-  lang: 'en',
-  stage: 'development',
-  generator: 'claude',
-  reviewers: new Set(['claude','openai','deepseek']),
-  reviewEnabled: true,
-  files: [],
-  sessionId: null,
-  result: null,
-  activeTab: 'markdown',
-  loading: false,
-  stages: [],
-};
-
-// ── i18n strings ──────────────────────────────────────────────────────────────
-const I18N = {
-  en: {
-    pageTitle: 'AI Test Case Generator',
-    'lbl-stage': 'Testing Stage',
-    'lbl-generator': 'Generator Model',
-    'lbl-reviewer': 'Reviewer Models',
-    'lbl-review-on': 'Review loop enabled',
-    'lbl-review-off': 'Review loop disabled',
-    'lbl-review-sub': 'Score threshold: 90 · Max 5 rounds',
-    'lbl-upload': 'Upload Requirements',
-    'lbl-click': 'Click to upload',
-    'lbl-or': ' or drag & drop',
-    'lbl-formats': 'PDF · Word · TXT · Images · Video (MP4/MOV)',
-    'lbl-text': 'Requirement Text',
-    'lbl-prompt': 'Custom Prompt (optional)',
-    'btn-text': '✨ Generate Test Cases',
-    'lbl-progress': 'Generation Progress',
-    'tab-md': '📄 Test Cases',
-    'tab-stats': '📊 Stats',
-    'tab-review': '🔍 Review',
-    'empty-title': 'Awaiting generation',
-    'empty-sub': 'Upload requirements or enter text, then click Generate',
-    'btn-refine': '🔄 Re-optimize',
-    textPlaceholder: 'Paste requirement description here…\n\nExample:\nUser login module\n- Phone number + password login\n- OAuth (GitHub / Google)\n- Lock account for 30 min after 5 failed attempts',
-    promptPlaceholder: 'e.g. Focus on boundary values and security scenarios',
-    refinePlaceholder: 'Describe modifications, e.g. Add performance tests, refine login steps…',
-    'dlXmind': '🗺 XMind',
-  },
-  zh: {
-    pageTitle: 'AI 测试用例生成器',
-    'lbl-stage': '测试阶段',
-    'lbl-generator': '生成模型',
-    'lbl-reviewer': '评审模型',
-    'lbl-review-on': '评审闭环已开启',
-    'lbl-review-off': '评审闭环已关闭',
-    'lbl-review-sub': '评分阈值：90分 · 最多5轮',
-    'lbl-upload': '上传需求文件（可选）',
-    'lbl-click': '点击上传',
-    'lbl-or': ' 或拖拽到此处',
-    'lbl-formats': 'PDF · Word · TXT · 图片 · 视频（MP4/MOV）',
-    'lbl-text': '需求文本',
-    'lbl-prompt': '补充提示词（可选）',
-    'btn-text': '✨ 生成测试用例',
-    'lbl-progress': '生成进度',
-    'tab-md': '📄 测试用例',
-    'tab-stats': '📊 统计',
-    'tab-review': '🔍 评审',
-    'empty-title': '等待生成',
-    'empty-sub': '上传需求文件或输入需求文本，点击「生成测试用例」',
-    'btn-refine': '🔄 优化重生成',
-    textPlaceholder: '粘贴需求描述到这里…\n\n例如：\n用户登录模块\n- 支持手机号+密码登录\n- 支持微信/GitHub OAuth\n- 错误5次锁定30分钟',
-    promptPlaceholder: '例如：重点覆盖边界值和安全异常场景',
-    refinePlaceholder: '描述修改要求，例如：增加性能测试，细化登录步骤…',
-    'dlXmind': '🗺 XMind',
-  },
-};
-
-function t(key) { return I18N[S.lang][key] || key; }
-
-function applyI18n() {
-  document.getElementById('pageTitle').textContent = t('pageTitle');
-  document.title = t('pageTitle');
-  const ids = ['lbl-stage','lbl-generator','lbl-reviewer','lbl-review-sub',
-    'lbl-upload','lbl-text','lbl-prompt','btn-text','lbl-progress',
-    'tab-md','tab-stats','tab-review','empty-title','empty-sub','btn-refine'];
-  ids.forEach(id => { const el = document.getElementById(id); if(el) el.textContent = t(id); });
-  document.getElementById('lbl-click').textContent = t('lbl-click');
-  document.getElementById('lbl-or').textContent = t('lbl-or');
-  document.getElementById('lbl-formats').textContent = t('lbl-formats');
-  document.getElementById('reqText').placeholder = t('textPlaceholder');
-  document.getElementById('promptInput').placeholder = t('promptPlaceholder');
-  document.getElementById('refineInput').placeholder = t('refinePlaceholder');
-  document.getElementById('lbl-review-on').textContent = S.reviewEnabled ? t('lbl-review-on') : t('lbl-review-off');
-  renderStageGrid();
-  if (S.result) renderResult();
-}
-
-// ── Lang ──────────────────────────────────────────────────────────────────────
-function setLang(lang, btn) {
-  S.lang = lang;
-  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  applyI18n();
-}
-
-// ── Stages ────────────────────────────────────────────────────────────────────
-async function loadStages() {
-  try {
-    const r = await fetch(`/api/stages?lang=${S.lang}`);
-    const j = await r.json();
-    if (j.success) S.stages = j.data;
-  } catch {
-    S.stages = [
-      { id:'requirement', name:'Requirement Review', description:'Completeness, clarity, boundaries' },
-      { id:'development', name:'Development Handoff', description:'Functional, UI, security, compatibility' },
-      { id:'prerelease',  name:'Pre-Release',         description:'Regression, smoke, performance, deploy' },
-    ];
-  }
-  renderStageGrid();
-}
-
-function renderStageGrid() {
-  const grid = document.getElementById('stageGrid');
-  if (!S.stages.length) return;
-  grid.innerHTML = S.stages.map(s => `
-    <div class="stage-btn ${s.id===S.stage?'active':''}" onclick="selectStage('${s.id}')">
+            function renderStageGrid() {
+                const grid = document.getElementById("stageGrid");
+                if (!S.stages.length) return;
+                grid.innerHTML = S.stages
+                    .map(
+                        (s) => `
+    <div class="stage-btn ${s.id === S.stage ? "active" : ""}" onclick="selectStage('${s.id}')">
       <div class="stage-name">${s.name || s.id}</div>
-      <div class="stage-desc">${s.description || ''}</div>
-    </div>`).join('');
-}
+      <div class="stage-desc">${s.description || ""}</div>
+    </div>`,
+                    )
+                    .join("");
+            }
 
-function selectStage(id) {
-  S.stage = id;
-  renderStageGrid();
-}
+            function selectStage(id) {
+                S.stage = id;
+                renderStageGrid();
+            }
 
-// ── Provider selectors ────────────────────────────────────────────────────────
-function selectGen(btn) {
-  document.querySelectorAll('#generatorGrid .provider-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  S.generator = btn.dataset.p;
-}
+            // ── Provider selectors ────────────────────────────────────────────────────────
+            function selectGen(btn) {
+                document
+                    .querySelectorAll("#generatorGrid .provider-btn")
+                    .forEach((b) => b.classList.remove("active"));
+                btn.classList.add("active");
+                S.generator = btn.dataset.p;
+            }
 
-function toggleReviewer(btn) {
-  const p = btn.dataset.p;
-  if (S.reviewers.has(p)) {
-    S.reviewers.delete(p);
-    btn.classList.remove('reviewer-active');
-  } else {
-    S.reviewers.add(p);
-    btn.classList.add('reviewer-active');
-  }
-}
+            function toggleReviewer(btn) {
+                const p = btn.dataset.p;
+                if (S.reviewers.has(p)) {
+                    S.reviewers.delete(p);
+                    btn.classList.remove("reviewer-active");
+                } else {
+                    S.reviewers.add(p);
+                    btn.classList.add("reviewer-active");
+                }
+            }
 
-function toggleReview() {
-  S.reviewEnabled = !S.reviewEnabled;
-  const track = document.getElementById('reviewToggle');
-  track.classList.toggle('on', S.reviewEnabled);
-  document.getElementById('lbl-review-on').textContent = S.reviewEnabled ? t('lbl-review-on') : t('lbl-review-off');
-}
+            function toggleReview() {
+                S.reviewEnabled = !S.reviewEnabled;
+                const track = document.getElementById("reviewToggle");
+                track.classList.toggle("on", S.reviewEnabled);
+                document.getElementById("lbl-review-on").textContent =
+                    S.reviewEnabled ? t("lbl-review-on") : t("lbl-review-off");
+            }
 
-// ── Files ─────────────────────────────────────────────────────────────────────
-const ICONS = { pdf:'📕', docx:'📘', doc:'📘', txt:'📄', png:'🖼', jpg:'🖼', jpeg:'🖼', webp:'🖼', mp4:'🎬', mov:'🎬', avi:'🎬', mkv:'🎬' };
+            // ── Files ─────────────────────────────────────────────────────────────────────
+            const ICONS = {
+                pdf: "📕",
+                docx: "📘",
+                doc: "📘",
+                txt: "📄",
+                png: "🖼",
+                jpg: "🖼",
+                jpeg: "🖼",
+                webp: "🖼",
+                mp4: "🎬",
+                mov: "🎬",
+                avi: "🎬",
+                mkv: "🎬",
+            };
 
-function handleFiles(list) {
-  for (const f of list) if (!S.files.find(x=>x.name===f.name)) S.files.push(f);
-  renderFiles();
-}
+            function handleFiles(list) {
+                for (const f of list)
+                    if (!S.files.find((x) => x.name === f.name))
+                        S.files.push(f);
+                renderFiles();
+            }
 
-function removeFile(name) { S.files = S.files.filter(f=>f.name!==name); renderFiles(); }
+            function removeFile(name) {
+                S.files = S.files.filter((f) => f.name !== name);
+                renderFiles();
+            }
 
-function renderFiles() {
-  document.getElementById('fileList').innerHTML = S.files.map(f => {
-    const ext = f.name.split('.').pop().toLowerCase();
-    return `<div class="file-item">
-      <span>${ICONS[ext]||'📄'}</span>
+            function renderFiles() {
+                document.getElementById("fileList").innerHTML = S.files
+                    .map((f) => {
+                        const ext = f.name.split(".").pop().toLowerCase();
+                        return `<div class="file-item">
+      <span>${ICONS[ext] || "📄"}</span>
       <span class="file-name" title="${f.name}">${f.name}</span>
-      <span style="color:var(--muted);font-size:10px">${(f.size/1024).toFixed(0)}KB</span>
+      <span style="color:var(--muted);font-size:10px">${(f.size / 1024).toFixed(0)}KB</span>
       <span class="file-remove" onclick="removeFile('${f.name}')">✕</span>
     </div>`;
-  }).join('');
-}
+                    })
+                    .join("");
+            }
 
-const dz = document.getElementById('dropZone');
-dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
-dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
-dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); if(e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); });
+            const dz = document.getElementById("dropZone");
+            dz.addEventListener("dragover", (e) => {
+                e.preventDefault();
+                dz.classList.add("drag");
+            });
+            dz.addEventListener("dragleave", () => dz.classList.remove("drag"));
+            dz.addEventListener("drop", (e) => {
+                e.preventDefault();
+                dz.classList.remove("drag");
+                if (e.dataTransfer.files.length)
+                    handleFiles(e.dataTransfer.files);
+            });
 
-// ── Progress ──────────────────────────────────────────────────────────────────
-function addProgress(msg, round, score, done=false) {
-  document.getElementById('progressPanel').classList.add('visible');
-  const log = document.getElementById('progressLog');
-  const entry = document.createElement('div');
-  entry.className = 'progress-entry';
-  entry.innerHTML = `
-    <div class="progress-dot ${done?'done':''}"></div>
-    ${round > 0 ? `<span class="round-pill">R${round}</span>` : ''}
+            // ── Progress ──────────────────────────────────────────────────────────────────
+            function addProgress(msg, round, score, done = false) {
+                document
+                    .getElementById("progressPanel")
+                    .classList.add("visible");
+                const log = document.getElementById("progressLog");
+                const entry = document.createElement("div");
+                entry.className = "progress-entry";
+                entry.innerHTML = `
+    <div class="progress-dot ${done ? "done" : ""}"></div>
+    ${round > 0 ? `<span class="round-pill">R${round}</span>` : ""}
     <span>${msg}</span>
-    ${score > 0 ? `<span style="color:var(--accent2);font-size:11px;font-weight:700">${score}/100</span>` : ''}`;
-  log.appendChild(entry);
-  log.scrollTop = log.scrollHeight;
-}
+    ${score > 0 ? `<span style="color:var(--accent2);font-size:11px;font-weight:700">${score}/100</span>` : ""}`;
+                log.appendChild(entry);
+                log.scrollTop = log.scrollHeight;
+            }
 
-function clearProgress() {
-  document.getElementById('progressPanel').classList.remove('visible');
-  document.getElementById('progressLog').innerHTML = '';
-}
+            function clearProgress() {
+                document
+                    .getElementById("progressPanel")
+                    .classList.remove("visible");
+                document.getElementById("progressLog").innerHTML = "";
+            }
 
-// ── Generate ──────────────────────────────────────────────────────────────────
-async function generate() {
-  const text = document.getElementById('reqText').value.trim();
-  const prompt = document.getElementById('promptInput').value.trim();
-  if (!text && !S.files.length) { toast('Please enter requirements or upload files', 'error'); return; }
+            // ── Generate ──────────────────────────────────────────────────────────────────
+            async function generate() {
+                const text = document.getElementById("reqText").value.trim();
+                const prompt = document
+                    .getElementById("promptInput")
+                    .value.trim();
+                if (!text && !S.files.length) {
+                    toast("Please enter requirements or upload files", "error");
+                    return;
+                }
 
-  setLoading(true);
-  clearProgress();
+                setLoading(true);
+                clearProgress();
 
-  const fd = new FormData();
-  if (text) fd.append('text', text);
-  if (prompt) fd.append('prompt', prompt);
-  fd.append('stage', S.stage);
-  fd.append('language', S.lang);
-  fd.append('enableReview', S.reviewEnabled ? 'true' : 'false');
-  S.files.forEach(f => fd.append('files', f));
+                const fd = new FormData();
+                if (text) fd.append("text", text);
+                if (prompt) fd.append("prompt", prompt);
+                fd.append("stage", S.stage);
+                fd.append("language", S.lang);
+                fd.append("enableReview", S.reviewEnabled ? "true" : "false");
+                S.files.forEach((f) => fd.append("files", f));
 
-  try {
-    await streamRequest('/api/generate', fd, (ev, data) => {
-      if (ev === 'progress') addProgress(data.message, data.round||0, data.score||0);
-      if (ev === 'done') {
-        S.sessionId = data.data.sessionId;
-        S.result = data.data.result;
-        addProgress('Generation complete ✅', 0, S.result.finalScore||0, true);
-        applyResult();
-        toast(`✅ Generated ${S.result.testCases.length} test cases`, 'success');
-        setLoading(false);
-      }
-      if (ev === 'error') {
-        toast(data.error || 'Generation failed', 'error');
-        setLoading(false);
-      }
-    });
-  } catch(e) {
-    toast('Request failed: ' + e.message, 'error');
-    setLoading(false);
-  }
-}
+                try {
+                    await streamRequest("/api/generate", fd, (ev, data) => {
+                        if (ev === "progress")
+                            addProgress(
+                                data.message,
+                                data.round || 0,
+                                data.score || 0,
+                            );
+                        if (ev === "done") {
+                            S.sessionId = data.data.sessionId;
+                            S.result = data.data.result;
+                            addProgress(
+                                "Generation complete ✅",
+                                0,
+                                S.result.finalScore || 0,
+                                true,
+                            );
+                            applyResult();
+                            toast(
+                                `✅ Generated ${S.result.testCases.length} test cases`,
+                                "success",
+                            );
+                            setLoading(false);
+                        }
+                        if (ev === "error") {
+                            toast(data.error || "Generation failed", "error");
+                            setLoading(false);
+                        }
+                    });
+                } catch (e) {
+                    toast("Request failed: " + e.message, "error");
+                    setLoading(false);
+                }
+            }
 
-// ── Refine ────────────────────────────────────────────────────────────────────
-async function refine() {
-  const instructions = document.getElementById('refineInput').value.trim();
-  const text = document.getElementById('reqText').value.trim();
-  if (!S.sessionId) { toast('Please generate first', 'error'); return; }
+            // ── Refine ────────────────────────────────────────────────────────────────────
+            async function refine() {
+                const instructions = document
+                    .getElementById("refineInput")
+                    .value.trim();
+                const text = document.getElementById("reqText").value.trim();
+                if (!S.sessionId) {
+                    toast("Please generate first", "error");
+                    return;
+                }
 
-  setLoading(true);
-  clearProgress();
+                setLoading(true);
+                clearProgress();
 
-  const fd = new FormData();
-  fd.append('sessionId', S.sessionId);
-  if (instructions) fd.append('editInstructions', instructions);
-  if (text) fd.append('text', text);
-  fd.append('language', S.lang);
-  fd.append('enableReview', S.reviewEnabled ? 'true' : 'false');
-  S.files.forEach(f => fd.append('files', f));
+                const fd = new FormData();
+                fd.append("sessionId", S.sessionId);
+                if (instructions) fd.append("editInstructions", instructions);
+                if (text) fd.append("text", text);
+                fd.append("language", S.lang);
+                fd.append("enableReview", S.reviewEnabled ? "true" : "false");
+                S.files.forEach((f) => fd.append("files", f));
 
-  try {
-    await streamRequest('/api/refine', fd, (ev, data) => {
-      if (ev === 'progress') addProgress(data.message, data.round||0, data.score||0);
-      if (ev === 'done') {
-        S.sessionId = data.data.sessionId;
-        S.result = data.data.result;
-        addProgress('Refinement complete ✅', 0, S.result.finalScore||0, true);
-        applyResult();
-        toast('🔄 Re-generation complete', 'success');
-        setLoading(false);
-      }
-      if (ev === 'error') { toast(data.error||'Refinement failed','error'); setLoading(false); }
-    });
-  } catch(e) {
-    toast('Request failed: '+e.message,'error');
-    setLoading(false);
-  }
-}
+                try {
+                    await streamRequest("/api/refine", fd, (ev, data) => {
+                        if (ev === "progress")
+                            addProgress(
+                                data.message,
+                                data.round || 0,
+                                data.score || 0,
+                            );
+                        if (ev === "done") {
+                            S.sessionId = data.data.sessionId;
+                            S.result = data.data.result;
+                            addProgress(
+                                "Refinement complete ✅",
+                                0,
+                                S.result.finalScore || 0,
+                                true,
+                            );
+                            applyResult();
+                            toast("🔄 Re-generation complete", "success");
+                            setLoading(false);
+                        }
+                        if (ev === "error") {
+                            toast(data.error || "Refinement failed", "error");
+                            setLoading(false);
+                        }
+                    });
+                } catch (e) {
+                    toast("Request failed: " + e.message, "error");
+                    setLoading(false);
+                }
+            }
 
-// ── SSE stream helper ─────────────────────────────────────────────────────────
-async function streamRequest(url, fd, onEvent) {
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { Accept: 'text/event-stream' },
-    body: fd,
-  });
-  if (!res.headers.get('content-type')?.includes('text/event-stream')) {
-    const j = await res.json();
-    onEvent(j.success ? 'done' : 'error', j);
-    return;
-  }
-  const reader = res.body.getReader();
-  const dec = new TextDecoder();
-  let buf = '';
-  let curEvent = 'message';
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buf += dec.decode(value, { stream: true });
-    const lines = buf.split('\n');
-    buf = lines.pop() || '';
-    for (const line of lines) {
-      if (line.startsWith('event: ')) curEvent = line.slice(7).trim();
-      else if (line.startsWith('data: ')) {
-        try { onEvent(curEvent, JSON.parse(line.slice(6))); } catch {}
-        curEvent = 'message';
-      }
-    }
-  }
-}
+            // ── SSE stream helper ─────────────────────────────────────────────────────────
+            async function streamRequest(url, fd, onEvent) {
+                const res = await fetch(url, {
+                    method: "POST",
+                    headers: { Accept: "text/event-stream" },
+                    body: fd,
+                });
+                if (
+                    !res.headers
+                        .get("content-type")
+                        ?.includes("text/event-stream")
+                ) {
+                    const j = await res.json();
+                    onEvent(j.success ? "done" : "error", j);
+                    return;
+                }
+                const reader = res.body.getReader();
+                const dec = new TextDecoder();
+                let buf = "";
+                let curEvent = "message";
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    buf += dec.decode(value, { stream: true });
+                    const lines = buf.split("\n");
+                    buf = lines.pop() || "";
+                    for (const line of lines) {
+                        if (line.startsWith("event: "))
+                            curEvent = line.slice(7).trim();
+                        else if (line.startsWith("data: ")) {
+                            try {
+                                onEvent(curEvent, JSON.parse(line.slice(6)));
+                            } catch {}
+                            curEvent = "message";
+                        }
+                    }
+                }
+            }
 
-// ── Apply result ──────────────────────────────────────────────────────────────
-function applyResult() {
-  document.getElementById('refineBar').classList.add('visible');
-  document.getElementById('dlExcel').disabled = false;
-  document.getElementById('dlMd').disabled = false;
-  document.getElementById('dlXmind').disabled = false;
-  if (S.result?.finalScore) {
-    const badge = document.getElementById('scoreBadge');
-    const num = document.getElementById('scoreNum');
-    badge.classList.add('visible');
-    num.textContent = S.result.finalScore;
-    num.className = 'score-num ' + (S.result.finalScore >= 90 ? 'pass' : S.result.finalScore >= 70 ? 'warn' : 'fail');
-  }
-  renderResult();
-}
+            // ── Apply result ──────────────────────────────────────────────────────────────
+            function applyResult() {
+                document.getElementById("refineBar").classList.add("visible");
+                document.getElementById("dlExcel").disabled = false;
+                document.getElementById("dlMd").disabled = false;
+                document.getElementById("dlXmind").disabled = false;
+                if (S.result?.finalScore) {
+                    const badge = document.getElementById("scoreBadge");
+                    const num = document.getElementById("scoreNum");
+                    badge.classList.add("visible");
+                    num.textContent = S.result.finalScore;
+                    num.className =
+                        "score-num " +
+                        (S.result.finalScore >= 90
+                            ? "pass"
+                            : S.result.finalScore >= 70
+                              ? "warn"
+                              : "fail");
+                }
+                renderResult();
+            }
 
-function switchTab(tab, el) {
-  S.activeTab = tab;
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  if (S.result) renderResult();
-}
+            function switchTab(tab, el) {
+                S.activeTab = tab;
+                document
+                    .querySelectorAll(".tab")
+                    .forEach((t) => t.classList.remove("active"));
+                el.classList.add("active");
+                if (S.result) renderResult();
+            }
 
-function renderResult() {
-  const body = document.getElementById('resultBody');
-  if (!S.result) return;
-  if (S.activeTab === 'markdown') {
-    body.innerHTML = `<div class="md-view">${mdToHtml(S.result.markdownOutput)}</div>`;
-  } else if (S.activeTab === 'stats') {
-    renderStats(body);
-  } else {
-    renderReview(body);
-  }
-}
+            function renderResult() {
+                const body = document.getElementById("resultBody");
+                if (!S.result) return;
+                if (S.activeTab === "markdown") {
+                    body.innerHTML = `<div class="md-view">${mdToHtml(S.result.markdownOutput)}</div>`;
+                } else if (S.activeTab === "stats") {
+                    renderStats(body);
+                } else {
+                    renderReview(body);
+                }
+            }
 
-function renderStats(body) {
-  const { testCases:tc, testPoints:tp, finalScore, reviewRounds } = S.result;
-  const p0=tc.filter(x=>x.priority==='P0').length, p1=tc.filter(x=>x.priority==='P1').length,
-        p2=tc.filter(x=>x.priority==='P2').length, p3=tc.filter(x=>x.priority==='P3').length;
+            function renderStats(body) {
+                const {
+                    testCases: tc,
+                    testPoints: tp,
+                    finalScore,
+                    reviewRounds,
+                } = S.result;
+                const p0 = tc.filter((x) => x.priority === "P0").length,
+                    p1 = tc.filter((x) => x.priority === "P1").length,
+                    p2 = tc.filter((x) => x.priority === "P2").length,
+                    p3 = tc.filter((x) => x.priority === "P3").length;
 
-  let scoreHtml = '';
-  if (reviewRounds?.length) {
-    const last = reviewRounds[reviewRounds.length-1];
-    const sc = averageScores(last.comments);
-    if (sc) {
-      scoreHtml = `<div class="score-breakdown">
+                let scoreHtml = "";
+                if (reviewRounds?.length) {
+                    const last = reviewRounds[reviewRounds.length - 1];
+                    const sc = averageScores(last.comments);
+                    if (sc) {
+                        scoreHtml = `<div class="score-breakdown">
         <div class="sb-title">📊 Quality Score Breakdown (${finalScore}/100)</div>
-        ${sb('Coverage', sc.coverage, 30)}
-        ${sb('Logic Integrity', sc.logicIntegrity, 20)}
-        ${sb('Executability', sc.executability, 20)}
-        ${sb('Clarity', sc.clarity, 15)}
-        ${sb('Security', sc.security, 15)}
+        ${sb("Coverage", sc.coverage, 30)}
+        ${sb("Logic Integrity", sc.logicIntegrity, 20)}
+        ${sb("Executability", sc.executability, 20)}
+        ${sb("Clarity", sc.clarity, 15)}
+        ${sb("Security", sc.security, 15)}
       </div>`;
-    }
-  }
+                    }
+                }
 
-  body.innerHTML = `
+                body.innerHTML = `
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-num">${tc.length}</div><div class="stat-lbl">Total Cases</div></div>
       <div class="stat-card"><div class="stat-num">${tp.length}</div><div class="stat-lbl">Test Points</div></div>
       <div class="stat-card"><div class="stat-num">${p0}</div><div class="stat-lbl">P0 Critical</div></div>
-      <div class="stat-card"><div class="stat-num">${finalScore||'—'}</div><div class="stat-lbl">Quality Score</div></div>
+      <div class="stat-card"><div class="stat-num">${finalScore || "—"}</div><div class="stat-lbl">Quality Score</div></div>
     </div>
     ${scoreHtml}
     <div style="max-width:780px;margin:0 auto">
-      ${pbar('P0', p0, tc.length, '#f87171')}
-      ${pbar('P1', p1, tc.length, '#fbbf24')}
-      ${pbar('P2', p2, tc.length, '#34d399')}
-      ${pbar('P3', p3, tc.length, '#64748b')}
+      ${pbar("P0", p0, tc.length, "#f87171")}
+      ${pbar("P1", p1, tc.length, "#fbbf24")}
+      ${pbar("P2", p2, tc.length, "#34d399")}
+      ${pbar("P3", p3, tc.length, "#64748b")}
     </div>`;
-}
+            }
 
-function averageScores(comments) {
-  if (!comments?.length) return null;
-  const totals = comments.reduce((acc, comment) => {
-    acc.coverage += comment.scores.coverage || 0;
-    acc.logicIntegrity += comment.scores.logicIntegrity || 0;
-    acc.executability += comment.scores.executability || 0;
-    acc.clarity += comment.scores.clarity || 0;
-    acc.security += comment.scores.security || 0;
-    return acc;
-  }, { coverage: 0, logicIntegrity: 0, executability: 0, clarity: 0, security: 0 });
+            function averageScores(comments) {
+                if (!comments?.length) return null;
+                const totals = comments.reduce(
+                    (acc, comment) => {
+                        acc.coverage += comment.scores.coverage || 0;
+                        acc.logicIntegrity +=
+                            comment.scores.logicIntegrity || 0;
+                        acc.executability += comment.scores.executability || 0;
+                        acc.clarity += comment.scores.clarity || 0;
+                        acc.security += comment.scores.security || 0;
+                        return acc;
+                    },
+                    {
+                        coverage: 0,
+                        logicIntegrity: 0,
+                        executability: 0,
+                        clarity: 0,
+                        security: 0,
+                    },
+                );
 
-  return {
-    coverage: Math.round(totals.coverage / comments.length),
-    logicIntegrity: Math.round(totals.logicIntegrity / comments.length),
-    executability: Math.round(totals.executability / comments.length),
-    clarity: Math.round(totals.clarity / comments.length),
-    security: Math.round(totals.security / comments.length),
-  };
-}
+                return {
+                    coverage: Math.round(totals.coverage / comments.length),
+                    logicIntegrity: Math.round(
+                        totals.logicIntegrity / comments.length,
+                    ),
+                    executability: Math.round(
+                        totals.executability / comments.length,
+                    ),
+                    clarity: Math.round(totals.clarity / comments.length),
+                    security: Math.round(totals.security / comments.length),
+                };
+            }
 
-function sb(label, val, max) {
-  const pct = Math.round((val/max)*100);
-  const colors = {Coverage:'#6366f1',LogicIntegrity:'#a78bfa',Executability:'#38bdf8',Clarity:'#34d399',Security:'#fbbf24','Logic Integrity':'#a78bfa'};
-  const col = colors[label.replace(' ','')] || colors[label] || '#6366f1';
-  return `<div class="sb-row">
+            function sb(label, val, max) {
+                const pct = Math.round((val / max) * 100);
+                const colors = {
+                    Coverage: "#6366f1",
+                    LogicIntegrity: "#a78bfa",
+                    Executability: "#38bdf8",
+                    Clarity: "#34d399",
+                    Security: "#fbbf24",
+                    "Logic Integrity": "#a78bfa",
+                };
+                const col =
+                    colors[label.replace(" ", "")] ||
+                    colors[label] ||
+                    "#6366f1";
+                return `<div class="sb-row">
     <div class="sb-label">${label}</div>
     <div class="sb-track"><div class="sb-fill" style="width:${pct}%;background:${col}"></div></div>
     <div class="sb-max">${val}/${max}</div>
   </div>`;
-}
+            }
 
-function pbar(label, count, total, color) {
-  const pct = total>0 ? Math.round((count/total)*100) : 0;
-  return `<div class="sb-row" style="margin-bottom:10px">
+            function pbar(label, count, total, color) {
+                const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                return `<div class="sb-row" style="margin-bottom:10px">
     <div class="sb-label" style="font-weight:700;color:${color}">${label}</div>
     <div class="sb-track"><div class="sb-fill" style="width:${pct}%;background:${color}"></div></div>
     <div class="sb-max">${count}</div>
   </div>`;
-}
+            }
 
-function renderReview(body) {
-  const rounds = S.result?.reviewRounds;
-  if (!rounds?.length) {
-    body.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No review data</div><div class="empty-sub">Enable the review loop and regenerate</div></div>`;
-    return;
-  }
-  const PERSONA_ICONS = { test_manager: '🎯', dev_manager: '💻', product_manager: '📋' };
-  body.innerHTML = `<div class="review-rounds">${rounds.map(r => `
+            function renderReview(body) {
+                const rounds = S.result?.reviewRounds;
+                if (!rounds?.length) {
+                    body.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No review data</div><div class="empty-sub">Enable the review loop and regenerate</div></div>`;
+                    return;
+                }
+                const PERSONA_ICONS = {
+                    test_manager: "🎯",
+                    dev_manager: "💻",
+                    product_manager: "📋",
+                };
+                body.innerHTML = `<div class="review-rounds">${rounds
+                    .map(
+                        (r) => `
     <div class="round-card">
       <div class="round-header">
         <span class="round-num">Round ${r.round}</span>
-        <span class="round-score ${r.aggregatedScore>=90?'pass':'fail'}">${r.aggregatedScore}/100</span>
-        <span style="font-size:11px;color:var(--muted)">${r.passed?'✅ Passed':'⏳ Needs improvement'}</span>
-        <div class="round-providers">${r.comments.map(c=>`<span class="prov-tag">${PERSONA_ICONS[c.persona]||'👤'} ${c.personaName||c.persona}</span>`).join('')}</div>
+        <span class="round-score ${r.aggregatedScore >= 90 ? "pass" : "fail"}">${r.aggregatedScore}/100</span>
+        <span style="font-size:11px;color:var(--muted)">${r.passed ? "✅ Passed" : "⏳ Needs improvement"}</span>
+        <div class="round-providers">${r.comments.map((c) => `<span class="prov-tag">${PERSONA_ICONS[c.persona] || "👤"} ${c.personaName || c.persona}</span>`).join("")}</div>
       </div>
-      ${r.comments.map(c => `
-        <div style="margin:8px 0 4px;font-size:12px;font-weight:700;color:var(--accent2)">${PERSONA_ICONS[c.persona]||'👤'} ${c.personaName} — ${c.scores.total}/100</div>
+      ${r.comments
+          .map(
+              (c) => `
+        <div style="margin:8px 0 4px;font-size:12px;font-weight:700;color:var(--accent2)">${PERSONA_ICONS[c.persona] || "👤"} ${c.personaName} — ${c.scores.total}/100</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-          ${Object.entries(c.scores).filter(([k])=>k!=='total').map(([k,v])=>`<span style="font-size:10px;background:var(--surface3);padding:2px 8px;border-radius:8px">${k}: ${v}</span>`).join('')}
+          ${Object.entries(c.scores)
+              .filter(([k]) => k !== "total")
+              .map(
+                  ([k, v]) =>
+                      `<span style="font-size:10px;background:var(--surface3);padding:2px 8px;border-radius:8px">${k}: ${v}</span>`,
+              )
+              .join("")}
         </div>
-        ${c.issues.length?`<div class="issues-list" style="margin-bottom:6px">${c.issues.map(i=>`<div class="issue-item">${i}</div>`).join('')}</div>`:''}
-      `).join('')}
-      ${r.aggregatedIssues.length > r.comments.reduce((s,c)=>s+c.issues.length,0)/r.comments.length ? `
-        <div style="font-size:11px;color:var(--muted);margin-top:8px">All ${r.aggregatedIssues.length} unique issues aggregated above</div>` : ''}
-    </div>`).join('')}</div>`;
-}
+        ${c.issues.length ? `<div class="issues-list" style="margin-bottom:6px">${c.issues.map((i) => `<div class="issue-item">${i}</div>`).join("")}</div>` : ""}
+      `,
+          )
+          .join("")}
+      ${
+          r.aggregatedIssues.length >
+          r.comments.reduce((s, c) => s + c.issues.length, 0) /
+              r.comments.length
+              ? `
+        <div style="font-size:11px;color:var(--muted);margin-top:8px">All ${r.aggregatedIssues.length} unique issues aggregated above</div>`
+              : ""
+      }
+    </div>`,
+                    )
+                    .join("")}</div>`;
+            }
 
-// ── Download ──────────────────────────────────────────────────────────────────
-function dl(type) { if(S.sessionId) window.open(`/api/download/${type}/${S.sessionId}`,'_blank'); }
+            // ── Download ──────────────────────────────────────────────────────────────────
+            function dl(type) {
+                if (S.sessionId)
+                    window.open(
+                        `/api/download/${type}/${S.sessionId}`,
+                        "_blank",
+                    );
+            }
 
-// ── Utils ─────────────────────────────────────────────────────────────────────
-function setLoading(v) {
-  S.loading = v;
-  document.getElementById('genBtn').disabled = v;
-  document.querySelector('.spinner').style.display = v ? 'block' : 'none';
-}
+            // ── Utils ─────────────────────────────────────────────────────────────────────
+            function setLoading(v) {
+                S.loading = v;
+                document.getElementById("genBtn").disabled = v;
+                document.querySelector(".spinner").style.display = v
+                    ? "block"
+                    : "none";
+            }
 
-function toast(msg, type='') {
-  const c = document.getElementById('toasts');
-  const el = document.createElement('div');
-  el.className = 'toast '+type;
-  el.textContent = msg;
-  c.appendChild(el);
-  setTimeout(() => el.remove(), 3800);
-}
+            function toast(msg, type = "") {
+                const c = document.getElementById("toasts");
+                const el = document.createElement("div");
+                el.className = "toast " + type;
+                el.textContent = msg;
+                c.appendChild(el);
+                setTimeout(() => el.remove(), 3800);
+            }
 
-// Minimal markdown → HTML
-function mdToHtml(md) {
-  if (!md) return '';
-  return md
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/^#### (.+)$/gm,'<h4>$1</h4>')
-    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
-    .replace(/^## (.+)$/gm,'<h2>$1</h2>')
-    .replace(/^# (.+)$/gm,'<h1>$1</h1>')
-    .replace(/^&gt; (.+)$/gm,'<blockquote>$1</blockquote>')
-    .replace(/^---$/gm,'<hr>')
-    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
-    .replace(/`(.+?)`/g,'<code>$1</code>')
-    .replace(/^\| (.+) \|$/gm,(_,row)=>'<tr>'+row.split(' | ').map(c=>`<td>${c}</td>`).join('')+'</tr>')
-    .replace(/(<tr>[\s\S]*?<\/tr>\n?)+/g,m=>`<table>${m}</table>`)
-    .replace(/^(\d+)\. (.+)$/gm,'<li style="list-style:decimal">$2</li>')
-    .replace(/^[-*] (.+)$/gm,'<li>$1</li>')
-    .replace(/\n/g,'<br>');
-}
+            // Minimal markdown → HTML
+            function mdToHtml(md) {
+                if (!md) return "";
+                return md
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/^#### (.+)$/gm, "<h4>$1</h4>")
+                    .replace(/^### (.+)$/gm, "<h3>$1</h3>")
+                    .replace(/^## (.+)$/gm, "<h2>$1</h2>")
+                    .replace(/^# (.+)$/gm, "<h1>$1</h1>")
+                    .replace(/^&gt; (.+)$/gm, "<blockquote>$1</blockquote>")
+                    .replace(/^---$/gm, "<hr>")
+                    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+                    .replace(/`(.+?)`/g, "<code>$1</code>")
+                    .replace(
+                        /^\| (.+) \|$/gm,
+                        (_, row) =>
+                            "<tr>" +
+                            row
+                                .split(" | ")
+                                .map((c) => `<td>${c}</td>`)
+                                .join("") +
+                            "</tr>",
+                    )
+                    .replace(
+                        /(<tr>[\s\S]*?<\/tr>\n?)+/g,
+                        (m) => `<table>${m}</table>`,
+                    )
+                    .replace(
+                        /^(\d+)\. (.+)$/gm,
+                        '<li style="list-style:decimal">$2</li>',
+                    )
+                    .replace(/^[-*] (.+)$/gm, "<li>$1</li>")
+                    .replace(/\n/g, "<br>");
+            }
 
-// ── Init ──────────────────────────────────────────────────────────────────────
-loadStages().then(() => applyI18n());
-</script>
-</body>
+            // ── Init ──────────────────────────────────────────────────────────────────────
+            loadStages().then(() => applyI18n());
+        </script>
+    </body>
 </html>

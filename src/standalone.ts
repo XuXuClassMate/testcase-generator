@@ -68,7 +68,7 @@ export async function startServer(cfg: PluginConfig): Promise<void> {
       provider: getGeneratorLabel(cfg),
       reviewers: getReviewerLabels(cfg),
       language: cfg.language,
-      version: "2.0.0",
+      version: "1.0.0",
     });
   });
 
@@ -144,7 +144,7 @@ export async function startServer(cfg: PluginConfig): Promise<void> {
       let mdPath: string | undefined;
       let xmindPath: string | undefined;
       if (result.testCases.length > 0) {
-        excelPath = exportToExcel(result.testCases, result.testPoints, cfg.outputDir, sessionId);
+        excelPath = exportToExcel(result.testCases, result.testPoints, cfg.outputDir, sessionId, result.language);
         mdPath = exportToMarkdown(result.markdownOutput, cfg.outputDir, sessionId);
       }
       if (result.testPoints.length > 0) {
@@ -215,7 +215,7 @@ export async function startServer(cfg: PluginConfig): Promise<void> {
       let mdPath: string | undefined;
       let xmindPath: string | undefined;
       if (result.testCases.length > 0) {
-        excelPath = exportToExcel(result.testCases, result.testPoints, cfg.outputDir, newId);
+        excelPath = exportToExcel(result.testCases, result.testPoints, cfg.outputDir, newId, result.language);
         mdPath = exportToMarkdown(result.markdownOutput, cfg.outputDir, newId);
       }
       if (result.testPoints.length > 0) {
@@ -265,7 +265,7 @@ export async function startServer(cfg: PluginConfig): Promise<void> {
   app.get("*", (_req, res) => {
     const idx = path.join(publicDir, "index.html");
     if (fs.existsSync(idx)) res.sendFile(idx);
-    else res.send("TestCase Generator v2 — standalone mode. API at /api/generate");
+    else res.send("TestCase Generator v1.0.0 — standalone mode. API at /api/generate");
   });
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -275,7 +275,7 @@ export async function startServer(cfg: PluginConfig): Promise<void> {
   });
 
   app.listen(cfg.standalonePort, () => {
-    console.log(`\n🦞 AI TestCase Generator v2 (Standalone)`);
+    console.log(`\nAI TestCase Generator v1.0.0 (Standalone)`);
     console.log(`   → http://localhost:${cfg.standalonePort}`);
     console.log(`   → Generator: ${getGeneratorLabel(cfg)}`);
     console.log(`   → Reviewers: ${getReviewerLabels(cfg).join(", ") || "none"}`);

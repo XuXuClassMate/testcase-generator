@@ -13,7 +13,7 @@
 set -e
 
 PKG_NAME="testcase-generator"
-VERSION="2.0.0"
+VERSION="1.0.0"
 REPO="https://github.com/XuXuClassMate/testcase-generator"
 CYAN="\033[0;36m"
 GREEN="\033[0;32m"
@@ -27,7 +27,7 @@ warn()    { echo -e "${YELLOW}⚠  $*${NC}"; }
 error()   { echo -e "${RED}❌ $*${NC}"; exit 1; }
 
 echo ""
-echo -e "${CYAN}🦞 AI TestCase Generator v${VERSION} — Installer${NC}"
+echo -e "${CYAN}AI TestCase Generator v${VERSION} — Installer${NC}"
 echo "──────────────────────────────────────────────────"
 echo ""
 
@@ -202,5 +202,5 @@ check_ffmpeg
 check_openclaw
 
 echo ""
-success "Installation complete! 🦞"
+success "Installation complete!"
 echo ""

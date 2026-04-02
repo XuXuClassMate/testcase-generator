@@ -1,4 +1,4 @@
-# 🦞 AI Test Case Generator v2
+# AI Test Case Generator v1.0.0
 
 AI-powered test case generation with a **three-persona review loop** (Test Manager · Dev Manager · Product Manager).
 

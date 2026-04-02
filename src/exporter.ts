@@ -18,14 +18,42 @@ export function exportToExcel(
   testCases: TestCase[],
   testPoints: TestPoint[],
   outputDir: string,
-  filename = "test-cases"
+  filename = "test-cases",
+  lang: Language = "en"
 ): string {
   fs.mkdirSync(outputDir, { recursive: true });
   const wb = XLSX.utils.book_new();
+  const zh = lang === "zh";
+  const T = {
+    sheetCases: zh ? "测试用例" : "Test Cases",
+    sheetPoints: zh ? "测试点" : "Test Points",
+    sheetStats: zh ? "统计信息" : "Statistics",
+    id: "ID",
+    module: zh ? "模块" : "Module",
+    feature: zh ? "功能点" : "Feature",
+    title: zh ? "标题" : "Title",
+    preconditions: zh ? "前置条件" : "Preconditions",
+    steps: zh ? "步骤" : "Steps",
+    expectedResult: zh ? "预期结果" : "Expected Result",
+    priority: zh ? "优先级" : "Priority",
+    type: zh ? "类型" : "Type",
+    automated: zh ? "自动化" : "Automated",
+    description: zh ? "描述" : "Description",
+    dimension: zh ? "维度" : "Dimension",
+    value: zh ? "值" : "Value",
+    totalCases: zh ? "用例总数" : "Total Cases",
+    totalPoints: zh ? "测试点总数" : "Total Test Points",
+    p0Cases: zh ? "P0 用例" : "P0 Cases",
+    p1Cases: zh ? "P1 用例" : "P1 Cases",
+    p2Cases: zh ? "P2 用例" : "P2 Cases",
+    p3Cases: zh ? "P3 用例" : "P3 Cases",
+    automatable: zh ? "可自动化数量" : "Automatable",
+    automationRate: zh ? "自动化占比" : "Automation Rate",
+  };
 
   // Sheet 1 — Test Cases
   const caseRows = [
-    ["ID", "Module", "Feature", "Title", "Preconditions", "Steps", "Expected Result", "Priority", "Type", "Automated"],
+    [T.id, T.module, T.feature, T.title, T.preconditions, T.steps, T.expectedResult, T.priority, T.type, T.automated],
     ...testCases.map((tc) => [
       tc.id, tc.module, tc.feature, tc.title, tc.preconditions,
       tc.steps.map((s, i) => `${i + 1}. ${s}`).join("\n"),
@@ -37,16 +65,16 @@ export function exportToExcel(
     { wch: 10 }, { wch: 16 }, { wch: 20 }, { wch: 36 }, { wch: 26 },
     { wch: 52 }, { wch: 36 }, { wch: 8 }, { wch: 16 }, { wch: 10 },
   ];
-  XLSX.utils.book_append_sheet(wb, wsCase, "Test Cases");
+  XLSX.utils.book_append_sheet(wb, wsCase, T.sheetCases);
 
   // Sheet 2 — Test Points
   const pointRows = [
-    ["Module", "Feature", "Description", "Priority"],
+    [T.module, T.feature, T.description, T.priority],
     ...testPoints.map((p) => [p.module, p.feature, p.description, p.priority]),
   ];
   const wsPoint = XLSX.utils.aoa_to_sheet(pointRows);
   wsPoint["!cols"] = [{ wch: 18 }, { wch: 22 }, { wch: 52 }, { wch: 8 }];
-  XLSX.utils.book_append_sheet(wb, wsPoint, "Test Points");
+  XLSX.utils.book_append_sheet(wb, wsPoint, T.sheetPoints);
 
   // Sheet 3 — Statistics
   const p0 = testCases.filter((t) => t.priority === "P0").length;
@@ -55,18 +83,18 @@ export function exportToExcel(
   const p3 = testCases.filter((t) => t.priority === "P3").length;
   const autoYes = testCases.filter((t) => ["Yes", "是"].includes(t.automated)).length;
   const statsRows: (string | number)[][] = [
-    ["Dimension", "Value"],
-    ["Total Cases", testCases.length],
-    ["Total Test Points", testPoints.length],
+    [T.dimension, T.value],
+    [T.totalCases, testCases.length],
+    [T.totalPoints, testPoints.length],
     ["", ""],
-    ["P0 Cases", p0], ["P1 Cases", p1], ["P2 Cases", p2], ["P3 Cases", p3],
+    [T.p0Cases, p0], [T.p1Cases, p1], [T.p2Cases, p2], [T.p3Cases, p3],
     ["", ""],
-    ["Automatable", autoYes],
-    ["Automation Rate", testCases.length > 0 ? `${Math.round((autoYes / testCases.length) * 100)}%` : "0%"],
+    [T.automatable, autoYes],
+    [T.automationRate, testCases.length > 0 ? `${Math.round((autoYes / testCases.length) * 100)}%` : "0%"],
   ];
   const wsStats = XLSX.utils.aoa_to_sheet(statsRows);
   wsStats["!cols"] = [{ wch: 20 }, { wch: 14 }];
-  XLSX.utils.book_append_sheet(wb, wsStats, "Statistics");
+  XLSX.utils.book_append_sheet(wb, wsStats, T.sheetStats);
 
   const outPath = path.join(outputDir, `${filename}-${Date.now()}.xlsx`);
   XLSX.writeFile(wb, outPath);
@@ -111,7 +139,7 @@ export function exportToXMind(
 
   const contentJson = buildXMindContent(testPoints, rootTitle, lang);
   const metaJson = JSON.stringify({
-    creator: { name: "testcase-generator", version: "2.0.0" },
+    creator: { name: "testcase-generator", version: "1.0.0" },
     created: new Date().toISOString(),
   });
 
@@ -224,7 +252,7 @@ function buildXMindContent(testPoints: TestPoint[], rootTitle: string, lang: Lan
 
   const sheet: XMindSheet = {
     id: "sheet-1",
-    title: "Test Mind Map",
+    title: lang === "zh" ? "测试思维导图" : "Test Mind Map",
     rootTopic,
   };
 

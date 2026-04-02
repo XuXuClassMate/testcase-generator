@@ -90,7 +90,7 @@ export async function register(api: OpenClawPluginApi): Promise<void> {
 
       const files: string[] = [];
       if (doExcel && result.testCases.length > 0) {
-        files.push("Excel: `" + exportToExcel(result.testCases, result.testPoints, outputDir) + "`");
+        files.push("Excel: `" + exportToExcel(result.testCases, result.testPoints, outputDir, "test-cases", language) + "`");
       }
       if (doXMind && result.testPoints.length > 0) {
         const xp = await exportToXMind(result.testPoints, outputDir, result.summary.slice(0, 60), "mindmap", language);
@@ -161,7 +161,7 @@ export async function register(api: OpenClawPluginApi): Promise<void> {
       const result = await generator.generate({ content, prompt, stage, language, enableReview: !noReview });
       const outputDir = ctx.workspaceDir ? path.join(ctx.workspaceDir, "testcase-output") : cfg.outputDir;
 
-      const xlsxPath  = exportToExcel(result.testCases, result.testPoints, outputDir);
+      const xlsxPath  = exportToExcel(result.testCases, result.testPoints, outputDir, "test-cases", language);
       const xmindPath = await exportToXMind(result.testPoints, outputDir, result.summary.slice(0, 60), "mindmap", language);
       const mdPath    = exportToMarkdown(result.markdownOutput, outputDir);
 
