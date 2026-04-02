@@ -170,6 +170,7 @@ GitHub Actions currently automates:
 - npm publishing
 - Docker Hub publishing
 - GHCR publishing
+- Docker Hub overview sync from `docs/dockerhub-overview.md`
 - GitHub Releases asset publishing
 - free code scanning and dependency/security checks on merges to `main`
 
