@@ -35,6 +35,8 @@ jobs:
         shell: bash
         run: |
           VERSION=$(node -p "require('./package.json').version")
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          PACKAGE_ARCHIVE_BASE=$(echo "${PACKAGE_NAME}" | sed 's/^@//; s#/#-#g')
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             TAG_VERSION="${GITHUB_REF_NAME#v}"
             if [[ "${TAG_VERSION}" != "${VERSION}" ]]; then
@@ -44,6 +46,8 @@ jobs:
           fi
           OWNER_LC=$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')
           echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "package_name=${PACKAGE_NAME}" >> "${GITHUB_OUTPUT}"
+          echo "package_archive_base=${PACKAGE_ARCHIVE_BASE}" >> "${GITHUB_OUTPUT}"
           echo "owner_lc=${OWNER_LC}" >> "${GITHUB_OUTPUT}"
 
       - name: Install dependencies
@@ -57,6 +61,8 @@ jobs:
         run: |
           mkdir -p release
           npm pack --pack-destination release
+          mv "release/${{ steps.meta.outputs.package_archive_base }}-${{ steps.meta.outputs.version }}.tgz" \
+            "release/testcase-generator-${{ steps.meta.outputs.version }}.tgz"
           tar -czf "release/testcase-generator-${{ steps.meta.outputs.version }}-bundle.tgz" \
             dist public README.md docs Dockerfile .dockerignore openclaw.plugin.json SKILL.md \
             docker-compose.yml .env.example scripts/install.sh package.json package-lock.json tsconfig.json
@@ -67,7 +73,8 @@ jobs:
         shell: bash
         run: |
           VERSION="${{ steps.meta.outputs.version }}"
-          if npm view "testcase-generator@${VERSION}" version --json >/dev/null 2>&1; then
+          PACKAGE_NAME="${{ steps.meta.outputs.package_name }}"
+          if npm view "${PACKAGE_NAME}@${VERSION}" version --json >/dev/null 2>&1; then
             echo "already_published=true" >> "${GITHUB_OUTPUT}"
           else
             echo "already_published=false" >> "${GITHUB_OUTPUT}"
@@ -141,7 +148,9 @@ jobs:
           SOURCE_TGZ_URL="https://github.com/${REPO}/archive/refs/tags/${TAG}.tar.gz"
           GHCR_PACKAGE_URL="https://github.com/${REPO}/pkgs/container/testcase-generator"
           GHCR_PULL_CMD="docker pull ghcr.io/${OWNER_LC}/testcase-generator:${VERSION}"
-          NPM_INSTALL_CMD="npm install -g testcase-generator@${VERSION}"
+          PACKAGE_NAME="${{ steps.meta.outputs.package_name }}"
+          NPM_PACKAGE_URL="https://www.npmjs.com/package/${PACKAGE_NAME}"
+          NPM_INSTALL_CMD="npm install -g ${PACKAGE_NAME}@${VERSION}"
           NPM_STATUS_LINE="- npm: not configured for this workflow run."
           GHCR_STATUS_LINE="- GHCR: publish failed in this workflow run."
           DOCKERHUB_STATUS_LINE="- Docker Hub: not configured for this workflow run."
@@ -151,10 +160,10 @@ jobs:
 
           if [[ -n "${NPM_TOKEN}" ]]; then
             if [[ "${{ steps.npm_status.outputs.already_published }}" == "true" ]]; then
-              NPM_STATUS_LINE="- npm: available. \`${NPM_INSTALL_CMD}\`"
+              NPM_STATUS_LINE="- npm: available. \`${NPM_INSTALL_CMD}\` ([package](${NPM_PACKAGE_URL}))"
               NPM_QUICKSTART_LINE="- npm: \`${NPM_INSTALL_CMD}\`"
             elif [[ "${{ steps.publish_npm.outcome }}" == "success" ]]; then
-              NPM_STATUS_LINE="- npm: published in this release. \`${NPM_INSTALL_CMD}\`"
+              NPM_STATUS_LINE="- npm: published in this release. \`${NPM_INSTALL_CMD}\` ([package](${NPM_PACKAGE_URL}))"
               NPM_QUICKSTART_LINE="- npm: \`${NPM_INSTALL_CMD}\`"
             elif [[ "${{ steps.publish_npm.outcome }}" == "failure" ]]; then
               NPM_STATUS_LINE="- npm: publish failed in this workflow run."

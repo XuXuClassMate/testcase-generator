@@ -57,7 +57,7 @@ Open [http://localhost:3456](http://localhost:3456).
 ### npm global install
 
 ```bash
-npm install -g testcase-generator
+npm install -g @classmatexuxu/testcase-generator
 
 export AI_PROVIDER=anthropic
 export ANTHROPIC_API_KEY=sk-ant-...
@@ -118,6 +118,7 @@ Then configure `models[]` in your OpenClaw config. A full example lives in [docs
 ## Notes
 
 - For local, npm, and Docker standalone mode, the page language controls both generation language and exported file language.
+- The npm package name is `@classmatexuxu/testcase-generator`, while the installed CLI command remains `testcase-generator`.
 - For OpenClaw mode, the recommended approach is configuring `models[]` in plugin config instead of relying on env vars.
 - If you configure only one model, set its role to `both`.
 - Detailed setup and configuration docs live in [docs/README.md](/Users/xuxuclassmate/Documents/testcase-generator/docs/README.md).

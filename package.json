@@ -1,5 +1,5 @@
 {
-  "name": "testcase-generator",
+  "name": "@classmatexuxu/testcase-generator",
   "version": "1.0.0",
   "description": "AI-powered test case generator plugin for OpenClaw",
   "main": "./dist/index.js",

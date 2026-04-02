@@ -12,7 +12,7 @@
 
 set -e
 
-PKG_NAME="testcase-generator"
+PKG_NAME="@classmatexuxu/testcase-generator"
 VERSION="1.0.0"
 REPO="https://github.com/XuXuClassMate/testcase-generator"
 CYAN="\033[0;36m"
@@ -74,7 +74,7 @@ install_docker() {
 
   if [ ! -f ".env" ]; then
     cat > .env <<EOF
-AI_PROVIDER=claude
+AI_PROVIDER=anthropic
 ANTHROPIC_API_KEY=
 OPENAI_API_KEY=
 DEEPSEEK_API_KEY=

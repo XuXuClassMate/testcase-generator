@@ -341,7 +341,7 @@ Only these run modes are currently supported:
 ### npm global install
 
 ```bash
-npm install -g testcase-generator
+npm install -g @classmatexuxu/testcase-generator
 
 export AI_PROVIDER=anthropic
 export ANTHROPIC_API_KEY=sk-ant-...
