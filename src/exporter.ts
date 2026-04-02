@@ -5,12 +5,12 @@
  *   exportToXMind    → .xmind (zip containing content.xml — XMind 2022 format)
  */
 
-import XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import path from "path";
 import fs from "fs";
 import { createWriteStream } from "fs";
 import archiver from "archiver";
-import { TestCase, TestPoint, ReviewRound, Language } from "./types";
+import { TestCase, TestPoint, Language } from "./types";
 
 // ─── Excel ─────────────────────────────────────────────────────────────────────
 
@@ -20,9 +20,9 @@ export function exportToExcel(
   outputDir: string,
   filename = "test-cases",
   lang: Language = "en"
-): string {
+): Promise<string> {
   fs.mkdirSync(outputDir, { recursive: true });
-  const wb = XLSX.utils.book_new();
+  const wb = new ExcelJS.Workbook();
   const zh = lang === "zh";
   const T = {
     sheetCases: zh ? "测试用例" : "Test Cases",
@@ -51,30 +51,51 @@ export function exportToExcel(
     automationRate: zh ? "自动化占比" : "Automation Rate",
   };
 
-  // Sheet 1 — Test Cases
-  const caseRows = [
-    [T.id, T.module, T.feature, T.title, T.preconditions, T.steps, T.expectedResult, T.priority, T.type, T.automated],
-    ...testCases.map((tc) => [
-      tc.id, tc.module, tc.feature, tc.title, tc.preconditions,
-      tc.steps.map((s, i) => `${i + 1}. ${s}`).join("\n"),
-      tc.expectedResult, tc.priority, tc.type, tc.automated,
-    ]),
+  const wsCase = wb.addWorksheet(T.sheetCases);
+  wsCase.columns = [
+    { header: T.id, key: "id", width: 10 },
+    { header: T.module, key: "module", width: 16 },
+    { header: T.feature, key: "feature", width: 20 },
+    { header: T.title, key: "title", width: 36 },
+    { header: T.preconditions, key: "preconditions", width: 26 },
+    { header: T.steps, key: "steps", width: 52 },
+    { header: T.expectedResult, key: "expectedResult", width: 36 },
+    { header: T.priority, key: "priority", width: 8 },
+    { header: T.type, key: "type", width: 16 },
+    { header: T.automated, key: "automated", width: 10 },
   ];
-  const wsCase = XLSX.utils.aoa_to_sheet(caseRows);
-  wsCase["!cols"] = [
-    { wch: 10 }, { wch: 16 }, { wch: 20 }, { wch: 36 }, { wch: 26 },
-    { wch: 52 }, { wch: 36 }, { wch: 8 }, { wch: 16 }, { wch: 10 },
-  ];
-  XLSX.utils.book_append_sheet(wb, wsCase, T.sheetCases);
+  testCases.forEach((tc) => {
+    wsCase.addRow({
+      id: tc.id,
+      module: tc.module,
+      feature: tc.feature,
+      title: tc.title,
+      preconditions: tc.preconditions,
+      steps: tc.steps.map((s, i) => `${i + 1}. ${s}`).join("\n"),
+      expectedResult: tc.expectedResult,
+      priority: tc.priority,
+      type: tc.type,
+      automated: tc.automated,
+    });
+  });
+  wsCase.getRow(1).font = { bold: true };
 
-  // Sheet 2 — Test Points
-  const pointRows = [
-    [T.module, T.feature, T.description, T.priority],
-    ...testPoints.map((p) => [p.module, p.feature, p.description, p.priority]),
+  const wsPoint = wb.addWorksheet(T.sheetPoints);
+  wsPoint.columns = [
+    { header: T.module, key: "module", width: 18 },
+    { header: T.feature, key: "feature", width: 22 },
+    { header: T.description, key: "description", width: 52 },
+    { header: T.priority, key: "priority", width: 8 },
   ];
-  const wsPoint = XLSX.utils.aoa_to_sheet(pointRows);
-  wsPoint["!cols"] = [{ wch: 18 }, { wch: 22 }, { wch: 52 }, { wch: 8 }];
-  XLSX.utils.book_append_sheet(wb, wsPoint, T.sheetPoints);
+  testPoints.forEach((p) => {
+    wsPoint.addRow({
+      module: p.module,
+      feature: p.feature,
+      description: p.description,
+      priority: p.priority,
+    });
+  });
+  wsPoint.getRow(1).font = { bold: true };
 
   // Sheet 3 — Statistics
   const p0 = testCases.filter((t) => t.priority === "P0").length;
@@ -82,23 +103,30 @@ export function exportToExcel(
   const p2 = testCases.filter((t) => t.priority === "P2").length;
   const p3 = testCases.filter((t) => t.priority === "P3").length;
   const autoYes = testCases.filter((t) => ["Yes", "是"].includes(t.automated)).length;
-  const statsRows: (string | number)[][] = [
-    [T.dimension, T.value],
-    [T.totalCases, testCases.length],
-    [T.totalPoints, testPoints.length],
-    ["", ""],
-    [T.p0Cases, p0], [T.p1Cases, p1], [T.p2Cases, p2], [T.p3Cases, p3],
-    ["", ""],
-    [T.automatable, autoYes],
-    [T.automationRate, testCases.length > 0 ? `${Math.round((autoYes / testCases.length) * 100)}%` : "0%"],
+  const wsStats = wb.addWorksheet(T.sheetStats);
+  wsStats.columns = [
+    { header: T.dimension, key: "dimension", width: 20 },
+    { header: T.value, key: "value", width: 14 },
   ];
-  const wsStats = XLSX.utils.aoa_to_sheet(statsRows);
-  wsStats["!cols"] = [{ wch: 20 }, { wch: 14 }];
-  XLSX.utils.book_append_sheet(wb, wsStats, T.sheetStats);
+  [
+    { dimension: T.totalCases, value: testCases.length },
+    { dimension: T.totalPoints, value: testPoints.length },
+    { dimension: "", value: "" },
+    { dimension: T.p0Cases, value: p0 },
+    { dimension: T.p1Cases, value: p1 },
+    { dimension: T.p2Cases, value: p2 },
+    { dimension: T.p3Cases, value: p3 },
+    { dimension: "", value: "" },
+    { dimension: T.automatable, value: autoYes },
+    {
+      dimension: T.automationRate,
+      value: testCases.length > 0 ? `${Math.round((autoYes / testCases.length) * 100)}%` : "0%",
+    },
+  ].forEach((row) => wsStats.addRow(row));
+  wsStats.getRow(1).font = { bold: true };
 
   const outPath = path.join(outputDir, `${filename}-${Date.now()}.xlsx`);
-  XLSX.writeFile(wb, outPath);
-  return outPath;
+  return wb.xlsx.writeFile(outPath).then(() => outPath);
 }
 
 // ─── Markdown ──────────────────────────────────────────────────────────────────

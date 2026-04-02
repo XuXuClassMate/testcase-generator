@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * OpenClaw Plugin Entry Point
  *
@@ -90,7 +91,8 @@ export async function register(api: OpenClawPluginApi): Promise<void> {
 
       const files: string[] = [];
       if (doExcel && result.testCases.length > 0) {
-        files.push("Excel: `" + exportToExcel(result.testCases, result.testPoints, outputDir, "test-cases", language) + "`");
+        const excelPath = await exportToExcel(result.testCases, result.testPoints, outputDir, "test-cases", language);
+        files.push("Excel: `" + excelPath + "`");
       }
       if (doXMind && result.testPoints.length > 0) {
         const xp = await exportToXMind(result.testPoints, outputDir, result.summary.slice(0, 60), "mindmap", language);
@@ -161,7 +163,7 @@ export async function register(api: OpenClawPluginApi): Promise<void> {
       const result = await generator.generate({ content, prompt, stage, language, enableReview: !noReview });
       const outputDir = ctx.workspaceDir ? path.join(ctx.workspaceDir, "testcase-output") : cfg.outputDir;
 
-      const xlsxPath  = exportToExcel(result.testCases, result.testPoints, outputDir, "test-cases", language);
+      const xlsxPath  = await exportToExcel(result.testCases, result.testPoints, outputDir, "test-cases", language);
       const xmindPath = await exportToXMind(result.testPoints, outputDir, result.summary.slice(0, 60), "mindmap", language);
       const mdPath    = exportToMarkdown(result.markdownOutput, outputDir);
 
@@ -225,7 +227,7 @@ function resolveModels(raw: Record<string, unknown>): ModelEntry[] {
 
 // ─── Standalone mode ───────────────────────────────────────────────────────────
 
-async function runStandalone(): Promise<void> {
+export async function runStandalone(): Promise<void> {
   const { startServer } = await import("./standalone");
   const models = resolveModels({});
   const cfg: PluginConfig = {
@@ -241,8 +243,13 @@ async function runStandalone(): Promise<void> {
   await startServer(cfg);
 }
 
-if (require.main === module && process.argv.includes("--standalone")) {
-  runStandalone().catch(console.error);
+if (require.main === module) {
+  if (process.argv.includes("--standalone")) {
+    runStandalone().catch(console.error);
+  } else {
+    console.error("Usage: testcase-generator --standalone");
+    process.exitCode = 1;
+  }
 }
 
 export default { register };

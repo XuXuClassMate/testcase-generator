@@ -144,7 +144,7 @@ export async function startServer(cfg: PluginConfig): Promise<void> {
       let mdPath: string | undefined;
       let xmindPath: string | undefined;
       if (result.testCases.length > 0) {
-        excelPath = exportToExcel(result.testCases, result.testPoints, cfg.outputDir, sessionId, result.language);
+        excelPath = await exportToExcel(result.testCases, result.testPoints, cfg.outputDir, sessionId, result.language);
         mdPath = exportToMarkdown(result.markdownOutput, cfg.outputDir, sessionId);
       }
       if (result.testPoints.length > 0) {
@@ -215,7 +215,7 @@ export async function startServer(cfg: PluginConfig): Promise<void> {
       let mdPath: string | undefined;
       let xmindPath: string | undefined;
       if (result.testCases.length > 0) {
-        excelPath = exportToExcel(result.testCases, result.testPoints, cfg.outputDir, newId, result.language);
+        excelPath = await exportToExcel(result.testCases, result.testPoints, cfg.outputDir, newId, result.language);
         mdPath = exportToMarkdown(result.markdownOutput, cfg.outputDir, newId);
       }
       if (result.testPoints.length > 0) {
