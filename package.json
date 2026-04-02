@@ -3,9 +3,29 @@
   "version": "1.0.0",
   "description": "AI-powered test case generator plugin for OpenClaw",
   "main": "./dist/index.js",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/XuXuClassMate/testcase-generator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/XuXuClassMate/testcase-generator/issues"
+  },
+  "homepage": "https://github.com/XuXuClassMate/testcase-generator#readme",
+  "keywords": [
+    "openclaw",
+    "testing",
+    "testcase",
+    "qa",
+    "openai",
+    "anthropic"
+  ],
   "scripts": {
     "build": "tsc",
+    "typecheck": "tsc --noEmit",
     "dev": "ts-node src/index.ts",
+    "dev:standalone": "ts-node src/index.ts --standalone",
+    "start": "node dist/index.js --standalone",
     "standalone": "ts-node src/standalone.ts",
     "standalone:build": "tsc && node dist/standalone.js",
     "clean": "rm -rf dist"

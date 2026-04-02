@@ -718,9 +718,8 @@ function renderStats(body) {
   let scoreHtml = '';
   if (reviewRounds?.length) {
     const last = reviewRounds[reviewRounds.length-1];
-    const avgComments = last.comments[0];
-    if (avgComments) {
-      const sc = avgComments.scores;
+    const sc = averageScores(last.comments);
+    if (sc) {
       scoreHtml = `<div class="score-breakdown">
         <div class="sb-title">📊 Quality Score Breakdown (${finalScore}/100)</div>
         ${sb('Coverage', sc.coverage, 30)}
@@ -746,6 +745,26 @@ function renderStats(body) {
       ${pbar('P2', p2, tc.length, '#34d399')}
       ${pbar('P3', p3, tc.length, '#64748b')}
     </div>`;
+}
+
+function averageScores(comments) {
+  if (!comments?.length) return null;
+  const totals = comments.reduce((acc, comment) => {
+    acc.coverage += comment.scores.coverage || 0;
+    acc.logicIntegrity += comment.scores.logicIntegrity || 0;
+    acc.executability += comment.scores.executability || 0;
+    acc.clarity += comment.scores.clarity || 0;
+    acc.security += comment.scores.security || 0;
+    return acc;
+  }, { coverage: 0, logicIntegrity: 0, executability: 0, clarity: 0, security: 0 });
+
+  return {
+    coverage: Math.round(totals.coverage / comments.length),
+    logicIntegrity: Math.round(totals.logicIntegrity / comments.length),
+    executability: Math.round(totals.executability / comments.length),
+    clarity: Math.round(totals.clarity / comments.length),
+    security: Math.round(totals.security / comments.length),
+  };
 }
 
 function sb(label, val, max) {

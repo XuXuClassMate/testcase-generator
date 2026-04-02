@@ -18,7 +18,7 @@ WORKDIR /app
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
-COPY --from=builder /app/src/public ./dist/public
+COPY --from=builder /app/public ./public
 
 # Create output directory
 RUN mkdir -p /data/testcase-output

@@ -23,6 +23,7 @@ import { v4 as uuidv4 } from "uuid";
 import {
   PluginConfig, GenerationResult, ApiResponse,
   Language, TestStage,
+  getGeneratorLabel, getReviewerLabels,
 } from "./types";
 import { TestCaseGenerator } from "./generator";
 import { parseBuffer } from "./parser";
@@ -51,7 +52,7 @@ export async function startServer(cfg: PluginConfig): Promise<void> {
   app.use(cors());
   app.use(express.json({ limit: "50mb" }));
 
-  const publicDir = path.join(__dirname, "public");
+  const publicDir = path.resolve(__dirname, "../public");
   if (fs.existsSync(publicDir)) app.use(express.static(publicDir));
 
   const upload = multer({
@@ -64,8 +65,8 @@ export async function startServer(cfg: PluginConfig): Promise<void> {
   app.get("/api/health", (_req, res) => {
     res.json({
       ok: true,
-      provider: cfg.aiProvider,
-      reviewers: cfg.reviewerProviders,
+      provider: getGeneratorLabel(cfg),
+      reviewers: getReviewerLabels(cfg),
       language: cfg.language,
       version: "2.0.0",
     });
@@ -212,11 +213,15 @@ export async function startServer(cfg: PluginConfig): Promise<void> {
       const newId = uuidv4();
       let excelPath: string | undefined;
       let mdPath: string | undefined;
+      let xmindPath: string | undefined;
       if (result.testCases.length > 0) {
         excelPath = exportToExcel(result.testCases, result.testPoints, cfg.outputDir, newId);
         mdPath = exportToMarkdown(result.markdownOutput, cfg.outputDir, newId);
       }
-      sessions.set(newId, { id: newId, result, excelPath, mdPath, createdAt: Date.now() });
+      if (result.testPoints.length > 0) {
+        xmindPath = await exportToXMind(result.testPoints, cfg.outputDir, result.summary.slice(0, 60) || "Test Map", newId, result.language);
+      }
+      sessions.set(newId, { id: newId, result, excelPath, mdPath, xmindPath, createdAt: Date.now() });
       pruneOldSessions();
 
       const payload = { success: true, data: { sessionId: newId, result } };
@@ -258,7 +263,7 @@ export async function startServer(cfg: PluginConfig): Promise<void> {
   // ── SPA fallback ───────────────────────────────────────────────────────────
 
   app.get("*", (_req, res) => {
-    const idx = path.join(__dirname, "public", "index.html");
+    const idx = path.join(publicDir, "index.html");
     if (fs.existsSync(idx)) res.sendFile(idx);
     else res.send("TestCase Generator v2 — standalone mode. API at /api/generate");
   });
@@ -272,8 +277,8 @@ export async function startServer(cfg: PluginConfig): Promise<void> {
   app.listen(cfg.standalonePort, () => {
     console.log(`\n🦞 AI TestCase Generator v2 (Standalone)`);
     console.log(`   → http://localhost:${cfg.standalonePort}`);
-    console.log(`   → Generator: ${cfg.aiProvider}`);
-    console.log(`   → Reviewers: ${cfg.reviewerProviders.join(", ") || "none"}`);
+    console.log(`   → Generator: ${getGeneratorLabel(cfg)}`);
+    console.log(`   → Reviewers: ${getReviewerLabels(cfg).join(", ") || "none"}`);
     console.log(`   → Language:  ${cfg.language}`);
     console.log(`   → Review loop: ${cfg.enableReviewLoop ? `on (threshold ${cfg.reviewScoreThreshold}, max ${cfg.maxReviewRounds} rounds)` : "off"}`);
     console.log(`   → Output: ${cfg.outputDir}\n`);

@@ -7,7 +7,14 @@
  */
 
 import path from "path";
-import { DEFAULT_CONFIG, PluginConfig, ModelEntry, AIVendor, getGeneratorModel } from "./types";
+import {
+  DEFAULT_CONFIG,
+  PluginConfig,
+  ModelEntry,
+  AIVendor,
+  getGeneratorLabel,
+  getReviewerLabels,
+} from "./types";
 import { TestCaseGenerator } from "./generator";
 import { parseBuffer, parseFile } from "./parser";
 import { exportToExcel, exportToMarkdown, exportToXMind } from "./exporter";
@@ -36,9 +43,8 @@ export async function register(api: OpenClawPluginApi): Promise<void> {
   const cfg = resolveConfig(api.config);
 
   try {
-    const genModel = getGeneratorModel(cfg);
-    api.log.info(`[testcase-generator] Loaded. Generator: ${genModel.vendor}/${genModel.model}`);
-    api.log.info(`[testcase-generator] Reviewers: ${cfg.models.filter(m => m.role === 'reviewer' || m.role === 'both').map(m => m.id).join(', ')}`);
+    api.log.info(`[testcase-generator] Loaded. Generator: ${getGeneratorLabel(cfg)}`);
+    api.log.info(`[testcase-generator] Reviewers: ${getReviewerLabels(cfg).join(", ") || "none"}`);
   } catch (e) {
     api.log.error("[testcase-generator] Config error:", e);
   }
@@ -117,7 +123,7 @@ export async function register(api: OpenClawPluginApi): Promise<void> {
           "• `/testgen User login with phone+password, OAuth, 5-attempt lockout`\n" +
           "• `/testgen /path/req.pdf --stage prerelease --lang zh`"
         );
-        return;
+        return "";
       }
 
       // Parse flags
@@ -147,7 +153,7 @@ export async function register(api: OpenClawPluginApi): Promise<void> {
       let content;
       if (looksLikePath) {
         try { content = [await parseFile(input)]; }
-        catch { await ctx.reply(`❌ Cannot read file: ${input}`); return; }
+        catch { await ctx.reply(`❌ Cannot read file: ${input}`); return ""; }
       } else {
         content = [{ text: input, images: [], source: "chat", inputType: "txt" as const }];
       }
@@ -165,6 +171,7 @@ export async function register(api: OpenClawPluginApi): Promise<void> {
         scoreNote +
         `\n\n---\n📁 **Files:**\n- Excel: \`${xlsxPath}\`\n- XMind: \`${xmindPath}\`\n- Markdown: \`${mdPath}\``
       );
+      return result.markdownOutput;
     },
   });
 }

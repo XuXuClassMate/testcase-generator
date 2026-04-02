@@ -145,6 +145,14 @@ export const DEFAULT_CONFIG: PluginConfig = {
   enableReviewLoop: true,
 };
 
+function isReviewerCapable(model: ModelEntry): boolean {
+  return model.role === "reviewer" || model.role === "both";
+}
+
+export function formatModelLabel(model: ModelEntry): string {
+  return model.label ?? `${model.vendor}/${model.model || model.id}`;
+}
+
 /** Returns the generator model (first model with role=generator or role=both) */
 export function getGeneratorModel(cfg: PluginConfig): ModelEntry {
   const m = cfg.models.find((m) => m.role === "generator" || m.role === "both");
@@ -152,12 +160,24 @@ export function getGeneratorModel(cfg: PluginConfig): ModelEntry {
   return m;
 }
 
+export function getGeneratorLabel(cfg: PluginConfig): string {
+  return formatModelLabel(getGeneratorModel(cfg));
+}
+
+export function getReviewerCapableModels(cfg: PluginConfig): ModelEntry[] {
+  return cfg.models.filter(isReviewerCapable);
+}
+
+export function getReviewerLabels(cfg: PluginConfig): string[] {
+  return getReviewerCapableModels(cfg).map(formatModelLabel);
+}
+
 /**
  * Returns exactly 3 reviewer model slots, one per persona.
  * If fewer than 3 reviewer-capable models exist, cycles through available ones.
  */
 export function getReviewerModels(cfg: PluginConfig): Array<{ model: ModelEntry; persona: ReviewerPersonaConfig }> {
-  const candidates = cfg.models.filter((m) => m.role === "reviewer" || m.role === "both");
+  const candidates = getReviewerCapableModels(cfg);
   if (candidates.length === 0) {
     // Fallback: use generator model for all 3 personas
     const gen = getGeneratorModel(cfg);

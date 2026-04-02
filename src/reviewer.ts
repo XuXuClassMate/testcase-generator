@@ -91,7 +91,7 @@ export class MultiModelReviewer {
     requirementText: string,
     onProgress?: (msg: string, round: number, score: number) => void
   ): Promise<GenerationResult> {
-    const lang = this.config.language;
+    const lang = initial.language;
     const { maxReviewRounds, reviewScoreThreshold } = this.config;
     const reviewerSlots = getReviewerModels(this.config);
 

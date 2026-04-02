@@ -18,6 +18,7 @@ import {
   TestPoint,
   TestStage,
   getGeneratorModel,
+  getReviewerCapableModels,
 } from "./types";
 
 // ─── Build language-aware system prompt ───────────────────────────────────────
@@ -167,7 +168,7 @@ export class TestCaseGenerator {
     };
 
     const enableReview = req.enableReview ?? this.config.enableReviewLoop;
-    const hasReviewers = this.config.reviewerProviders.length > 0;
+    const hasReviewers = getReviewerCapableModels(this.config).length > 0;
     if (!enableReview || !hasReviewers) return initial;
 
     onProgress?.("Starting multi-model review loop…", 0, 0);
@@ -201,7 +202,7 @@ export class TestCaseGenerator {
     };
 
     const enableReview = req.enableReview ?? this.config.enableReviewLoop;
-    if (!enableReview || this.config.reviewerProviders.length === 0) return refined;
+    if (!enableReview || getReviewerCapableModels(this.config).length === 0) return refined;
     return this.reviewer.runReviewLoop(refined, mergedText, onProgress);
   }
 }

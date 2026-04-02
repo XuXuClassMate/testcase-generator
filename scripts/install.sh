@@ -4,17 +4,17 @@
 # Supports: npm · local · Docker · Homebrew · pip (wrapper) · apt (deb) · go
 #
 # Usage:
-#   ./install.sh            → auto-detect best method
-#   ./install.sh --npm      → global npm install
-#   ./install.sh --docker   → Docker Compose
-#   ./install.sh --local    → local dev mode
+#   ./scripts/install.sh            → auto-detect best method
+#   ./scripts/install.sh --npm      → global npm install
+#   ./scripts/install.sh --docker   → Docker Compose
+#   ./scripts/install.sh --local    → local dev mode
 # ─────────────────────────────────────────────────────────────────────────────
 
 set -e
 
 PKG_NAME="testcase-generator"
 VERSION="2.0.0"
-REPO="https://github.com/your-org/testcase-generator"
+REPO="https://github.com/XuXuClassMate/testcase-generator"
 CYAN="\033[0;36m"
 GREEN="\033[0;32m"
 YELLOW="\033[1;33m"

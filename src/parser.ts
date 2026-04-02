@@ -7,7 +7,7 @@ import { parseVideoBuffer, isVideoFile } from "./video-parser";
 // Lazy-loads heavy deps to avoid startup cost in OpenClaw gateway mode
 
 export async function parseFile(filePath: string): Promise<ParsedContent> {
-  const ext = path.extname(filePath).toLowerCase().replace(".", "") as InputType;
+  const ext = path.extname(filePath).toLowerCase().replace(".", "");
   const source = path.basename(filePath);
 
   switch (ext) {

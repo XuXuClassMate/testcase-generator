@@ -213,7 +213,7 @@ Total score: **100 points**
 - `ffmpeg` (optional, for video frame extraction)
 
 ```bash
-git clone https://github.com/your-org/testcase-generator
+git clone https://github.com/XuXuClassMate/testcase-generator
 cd testcase-generator
 npm install
 npm run build
@@ -318,13 +318,13 @@ npm run standalone
 docker compose up -d
 
 # Universal installer (auto-detects best method)
-chmod +x install.sh && ./install.sh
+chmod +x scripts/install.sh && ./scripts/install.sh
 
 # Specific method
-./install.sh --docker   # Docker Compose
-./install.sh --npm      # npm global
-./install.sh --apt      # apt + Node.js install (Debian/Ubuntu)
-./install.sh --brew     # Homebrew (macOS)
+./scripts/install.sh --docker   # Docker Compose
+./scripts/install.sh --npm      # npm global
+./scripts/install.sh --apt      # apt + Node.js install (Debian/Ubuntu)
+./scripts/install.sh --brew     # Homebrew (macOS)
 ```
 
 ### Environment variables
@@ -384,7 +384,13 @@ testcase-generator/
 ├── openclaw.plugin.json       ← OpenClaw plugin manifest
 ├── Dockerfile
 ├── docker-compose.yml
-├── install.sh                 ← Universal installer
+├── public/
+│   └── index.html             ← Standalone web UI
+├── scripts/
+│   └── install.sh             ← Universal installer
+├── docs/
+│   ├── README.md              ← Detailed setup and usage guide
+│   └── skill.md               ← Skill reference
 ├── package.json
 ├── tsconfig.json
 ├── README.md
@@ -398,9 +404,7 @@ testcase-generator/
     ├── prompts.ts             ← Stage prompt templates (written into code 🔥)
     ├── parser.ts              ← PDF / DOCX / image parsing
     ├── video-parser.ts        ← FFmpeg frame extraction
-    ├── exporter.ts            ← Excel + Markdown + XMind export
-    └── public/
-        └── index.html         ← Full SPA (dark theme, bilingual EN/ZH)
+    └── exporter.ts            ← Excel + Markdown + XMind export
 ```
 
 ---

@@ -122,7 +122,11 @@ export class AIAdapter {
     const oaiMessages: OpenAI.ChatCompletionMessageParam[] = [
       { role: "system", content: systemPrompt },
       ...messages.map((m): OpenAI.ChatCompletionMessageParam => {
-        if (typeof m.content === "string") return { role: m.role, content: m.content };
+        if (typeof m.content === "string") {
+          return m.role === "user"
+            ? { role: "user", content: m.content }
+            : { role: "assistant", content: m.content };
+        }
         // Multimodal — only supported if vendor supports it
         const parts: OpenAI.ChatCompletionContentPart[] = m.content.map((p) => {
           if (p.type === "text") return { type: "text", text: p.text };
@@ -131,7 +135,18 @@ export class AIAdapter {
             image_url: { url: (p as { type: "image_url"; image_url: { url: string } }).image_url.url },
           };
         });
-        return { role: m.role, content: parts };
+
+        if (m.role === "user") {
+          return { role: "user", content: parts };
+        }
+
+        return {
+          role: "assistant",
+          content: m.content
+            .filter((part): part is { type: "text"; text: string } => part.type === "text")
+            .map((part) => part.text)
+            .join("\n"),
+        };
       }),
     ];
 
