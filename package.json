@@ -1,6 +1,6 @@
 {
   "name": "@classmatexuxu/testcase-generator",
-  "version": "1.0.0",
+  "version": "2.3.0",
   "description": "AI-powered test case generation for PRDs, specs, and multimodal QA inputs",
   "main": "./dist/index.js",
   "bin": {

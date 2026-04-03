@@ -1,7 +1,7 @@
 {
   "id": "testcase-generator",
   "name": "AI Test Case Generator",
-  "version": "1.0.0",
+  "version": "2.3.0",
   "description": "Generate high-quality test cases from docs/images/video with multi-model review loop (Test Manager · Dev Manager · Product Manager).",
   "author": "XuXuClassMate",
   "license": "MIT",
