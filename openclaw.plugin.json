@@ -7,6 +7,8 @@
   "license": "MIT",
   "entry": "./dist/index.js",
   "skill": "./SKILL.md",
+  "securityNote": "⚠️ VirusTotal may flag this project as 'Suspicious' - this is a FALSE POSITIVE. See SECURITY.md for details.",
+  "securityDocs": "https://github.com/XuXuClassMate/testcase-generator/blob/main/SECURITY.md",
   "configSchema": {
     "type": "object",
     "properties": {
@@ -33,7 +35,7 @@
       "reviewScoreThreshold": { "type": "number",  "default": 90,   "description": "Stop review when score >= this" },
       "maxReviewRounds":      { "type": "number",  "default": 5 },
       "standalonePort":       { "type": "number",  "default": 3456 },
-      "outputDir":            { "type": "string",  "default": "./testcase-output" }
+      "outputDir":            { "type": "string", "default": "./testcase-output" }
     }
   },
   "commands": { "enabled": true, "prefix": "/testgen" },
